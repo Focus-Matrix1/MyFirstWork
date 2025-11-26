@@ -27,16 +27,27 @@ const INITIAL_TASKS: Task[] = [
 export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [tasks, setTasks] = useState<Task[]>(() => {
     try {
+      // Safety check for environments where window is undefined (SSR)
+      if (typeof window === 'undefined') return INITIAL_TASKS;
+
       const saved = localStorage.getItem('focus-matrix-tasks');
-      return saved ? JSON.parse(saved) : INITIAL_TASKS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // CRITICAL: Ensure the parsed data is actually an array before using it
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      }
+      return INITIAL_TASKS;
     } catch (error) {
-      console.warn('LocalStorage access failed:', error);
+      console.warn('LocalStorage load failed, falling back to initial tasks:', error);
       return INITIAL_TASKS;
     }
   });
   
   const [hardcoreMode, setHardcoreMode] = useState<boolean>(() => {
     try {
+      if (typeof window === 'undefined') return false;
       return localStorage.getItem('focus-matrix-hardcore') === 'true';
     } catch (error) {
       return false;

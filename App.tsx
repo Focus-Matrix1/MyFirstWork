@@ -5,9 +5,64 @@ import { ListView } from './components/ListView';
 import { StatsView } from './components/StatsView';
 import { UserView } from './components/UserView';
 import { AddModal } from './components/AddModal';
-import { LayoutGrid, ListTodo, BarChart2, User, Plus } from 'lucide-react';
+import { LayoutGrid, ListTodo, BarChart2, User, Plus, AlertTriangle } from 'lucide-react';
 import { ViewState } from './types';
 
+// --- Error Boundary Component ---
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+  }
+
+  handleReset = () => {
+    try {
+        localStorage.clear();
+        window.location.reload();
+    } catch(e) {
+        console.error("Failed to clear storage", e);
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-screen p-8 text-center bg-[#F5F7FA]">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
+            <AlertTriangle className="w-8 h-8 text-red-500" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Something went wrong</h2>
+          <p className="text-sm text-gray-500 mb-8 max-w-xs mx-auto leading-relaxed">
+            The app encountered an error. This is usually caused by corrupted local data.
+          </p>
+          <div className="bg-white p-4 rounded-xl border border-gray-200 mb-8 w-full max-w-sm overflow-hidden">
+             <code className="text-xs text-red-500 block break-words text-left">
+                {this.state.error?.message || "Unknown error"}
+             </code>
+          </div>
+          <button 
+            onClick={this.handleReset}
+            className="px-6 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold shadow-lg shadow-gray-200 hover:scale-105 active:scale-95 transition-all"
+          >
+            Reset App Data & Reload
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// --- Main App Content ---
 const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('matrix');
   const [isAddModalOpen, setAddModalOpen] = useState(false);
@@ -66,8 +121,10 @@ const AppContent: React.FC = () => {
 
 export default function App() {
   return (
-    <TaskProvider>
-      <AppContent />
-    </TaskProvider>
+    <ErrorBoundary>
+      <TaskProvider>
+        <AppContent />
+      </TaskProvider>
+    </ErrorBoundary>
   );
 }
