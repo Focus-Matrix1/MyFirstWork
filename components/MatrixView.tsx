@@ -189,7 +189,7 @@ export const MatrixView: React.FC = () => {
       </div>
 
       {/* Matrix Container */}
-      <div className="flex-1 mx-4 mb-[90px] bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden grid grid-cols-2 grid-rows-[1.55fr_1fr] gap-px border border-gray-100 relative select-none">
+      <div className="flex-1 mx-4 mb-[calc(88px+env(safe-area-inset-bottom))] bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden grid grid-cols-2 grid-rows-[1.55fr_1fr] gap-px border border-gray-100 relative select-none">
          <div className="absolute inset-0 bg-gray-100 pointer-events-none"></div>
 
         <Quadrant 
