@@ -42,7 +42,7 @@ export const AddModal: React.FC<AddModalProps> = ({ isOpen, onClose }) => {
     if (title.trim()) {
       // Add task immediately
       addTask(title.trim(), category, selectedDate, description.trim());
-      // Close immediately, visual feedback is handled by App.tsx FAB
+      // Close IMMEDIATELY. Visual feedback is handled by App.tsx FAB.
       onClose();
     }
   };

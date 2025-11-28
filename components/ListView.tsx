@@ -85,13 +85,13 @@ const SwipeableTask: React.FC<{
         setOffset(newOffset);
         
         // Visual feedback
-        // Swipe Right (Positive) -> Delete
-        if (newOffset > 100 && !isTriggered) setIsTriggered(true);
-        if (newOffset < 100 && newOffset > 0 && isTriggered) setIsTriggered(false);
+        // Swipe Right (Positive) -> Categorize (Blue)
+        if (newOffset > 80 && !isTriggered) setIsTriggered(true);
+        if (newOffset < 80 && newOffset > 0 && isTriggered) setIsTriggered(false);
 
-        // Swipe Left (Negative) -> Categorize
-        if (newOffset < -80 && !isTriggered) setIsTriggered(true);
-        if (newOffset > -80 && newOffset < 0 && isTriggered) setIsTriggered(false);
+        // Swipe Left (Negative) -> Delete (Red)
+        if (newOffset < -100 && !isTriggered) setIsTriggered(true);
+        if (newOffset > -100 && newOffset < 0 && isTriggered) setIsTriggered(false);
     }
   };
 
@@ -101,15 +101,14 @@ const SwipeableTask: React.FC<{
     
     if (itemRef.current) itemRef.current.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
 
-    if (offset > 100) {
-        // Right Swipe -> Delete
-        setOffset(1000); 
-        setTimeout(() => onDelete(task.id), 300);
-    } else if (offset < -80) {
-        // Left Swipe -> Categorize
-        setOffset(-80); // Keep slightly open or reset
+    if (offset > 80) {
+        // Right Swipe -> Categorize
+        setOffset(0); // Reset immediately after triggering
         onCategorize(task);
-        setOffset(0);
+    } else if (offset < -100) {
+        // Left Swipe -> Delete
+        setOffset(-1000); // Slide out completely
+        setTimeout(() => onDelete(task.id), 300);
     } else {
         setOffset(0);
     }
@@ -119,15 +118,15 @@ const SwipeableTask: React.FC<{
     <div className="relative min-h-[72px] rounded-2xl overflow-hidden group select-none touch-pan-y mb-3">
         {/* Background Actions */}
         <div className="absolute inset-0 flex z-0 rounded-2xl overflow-hidden">
-            {/* Left Background (Visible when Swiping Right) -> Delete (Red) */}
-            <div className={`w-full h-full flex items-center justify-start pl-6 text-white font-bold text-sm transition-colors duration-300 ${isTriggered && offset > 0 ? 'bg-red-600' : 'bg-red-500'}`}>
-                <Trash2 className={`w-5 h-5 mr-1 ${isTriggered && offset > 0 ? 'scale-125' : ''} transition-transform`} />
+            {/* Left Background (Visible when Swiping Right) -> Categorize (Blue) */}
+            <div className={`w-full h-full flex items-center justify-start pl-6 text-white font-bold text-sm transition-colors duration-300 ${isTriggered && offset > 0 ? 'bg-blue-600' : 'bg-blue-500'}`}>
+                <span className="flex items-center gap-2 transform transition-transform duration-200" style={{ transform: isTriggered && offset > 0 ? 'scale(1.1)' : 'scale(1)' }}>
+                   <LayoutGrid className="w-5 h-5 mr-1" /> {t('list.action.categorize')}
+                </span>
             </div>
-            {/* Right Background (Visible when Swiping Left) -> Categorize (Blue) */}
-            <div className="absolute right-0 top-0 bottom-0 w-full h-full bg-blue-500 flex items-center justify-end pr-6 text-white font-bold text-sm">
-                 <span className="flex items-center gap-2">
-                    {t('list.action.categorize')} <LayoutGrid className="w-5 h-5 ml-1" />
-                 </span>
+            {/* Right Background (Visible when Swiping Left) -> Delete (Red) */}
+            <div className={`absolute right-0 top-0 bottom-0 w-full h-full flex items-center justify-end pr-6 text-white font-bold text-sm transition-colors duration-300 ${isTriggered && offset < 0 ? 'bg-red-600' : 'bg-red-500'}`}>
+                <Trash2 className={`w-5 h-5 ml-1 ${isTriggered && offset < 0 ? 'scale-125' : ''} transition-transform`} />
             </div>
         </div>
 
@@ -139,6 +138,7 @@ const SwipeableTask: React.FC<{
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
             onClick={(e) => {
+                // Only trigger click if not swiping and not clicking checkbox
                 if (Math.abs(offset) < 5 && !(e.target as HTMLElement).closest('.checkbox-area')) {
                     onClick(task);
                 }
