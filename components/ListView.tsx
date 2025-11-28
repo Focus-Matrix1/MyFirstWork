@@ -115,7 +115,7 @@ const SwipeableTask: React.FC<{
   };
 
   return (
-    <div className={`relative rounded-2xl overflow-hidden group select-none touch-pan-y ${isInbox ? 'mb-1 mx-1' : 'mb-3'}`}>
+    <div className="relative w-full h-full rounded-2xl overflow-hidden group select-none touch-pan-y">
         {/* Background Actions */}
         <div className="absolute inset-0 flex z-0 rounded-2xl overflow-hidden">
             <div className={`w-full h-full flex items-center justify-start pl-6 text-white font-bold text-sm transition-colors duration-300 ${isTriggered && offset > 0 ? 'bg-blue-600' : 'bg-blue-500'}`}>
@@ -249,7 +249,7 @@ export const ListView: React.FC = () => {
                     <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-md font-bold">{sortedBacklog.length}</span>
                 </div>
                  {sortedBacklog.map(task => (
-                     <div key={task.id} className="relative h-[52px]">
+                     <div key={task.id} className="relative h-[52px] mb-1 mx-1">
                         <SwipeableTask task={task} onCategorize={handleCategorize} onDelete={deleteTask} onComplete={completeTask} onClick={setEditingTask} t={t} />
                      </div>
                 ))}
@@ -261,7 +261,7 @@ export const ListView: React.FC = () => {
             <div className="mb-6 animate-fade-in space-y-3">
                 {/* <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">{t('list.section.planned')}</h3> */}
                 {sortedPlanned.map(task => (
-                    <div key={task.id} className="relative h-[84px]">
+                    <div key={task.id} className="relative h-[84px] mb-3">
                         <SwipeableTask task={task} onCategorize={handleCategorize} onDelete={deleteTask} onComplete={completeTask} onClick={setEditingTask} t={t} />
                     </div>
                 ))}
