@@ -4,6 +4,7 @@ import { Task, CategoryId } from '../types';
 interface TaskContextType {
   tasks: Task[];
   addTask: (title: string, category?: CategoryId) => void;
+  updateTask: (taskId: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => void;
   moveTask: (taskId: string, targetCategory: CategoryId) => void;
   completeTask: (taskId: string) => void;
   deleteTask: (taskId: string) => void;
@@ -81,6 +82,10 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setTasks(prev => [newTask, ...prev]);
   };
 
+  const updateTask = (taskId: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => {
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates } : t));
+  };
+
   const moveTask = (taskId: string, targetCategory: CategoryId) => {
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, category: targetCategory } : t));
   };
@@ -107,6 +112,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <TaskContext.Provider value={{ 
       tasks, 
       addTask, 
+      updateTask,
       moveTask, 
       completeTask, 
       deleteTask, 

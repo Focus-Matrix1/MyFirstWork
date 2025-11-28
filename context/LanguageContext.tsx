@@ -33,6 +33,13 @@ const translations: Record<Language, Record<string, string>> = {
     'list.move_to': 'Move "{title}" to...',
     'list.cancel': 'Cancel',
 
+    // Detail Modal
+    'detail.title': 'Task Details',
+    'detail.save': 'Save Changes',
+    'detail.delete': 'Delete Task',
+    'detail.created': 'Created',
+    'detail.category': 'Category',
+
     // Stats View
     'stats.title': 'Weekly Report',
     'stats.tasks_completed': 'Tasks Completed',
@@ -91,6 +98,13 @@ const translations: Record<Language, Record<string, string>> = {
     'list.action.delete': '删除',
     'list.move_to': '将 "{title}" 移动到...',
     'list.cancel': '取消',
+
+    // Detail Modal
+    'detail.title': '任务详情',
+    'detail.save': '保存修改',
+    'detail.delete': '删除任务',
+    'detail.created': '创建时间',
+    'detail.category': '所属分类',
 
     // Stats View
     'stats.title': '周报',
