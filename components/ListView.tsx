@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { LayoutGrid, Trash2, Zap, Calendar, Users, Coffee, CheckCircle2, FileText, Check } from 'lucide-react';
+import { LayoutGrid, Trash2, Zap, Calendar, Users, Coffee, CheckCircle2, FileText, Check, Hourglass } from 'lucide-react';
 import { useTasks } from '../context/TaskContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Task, CategoryId } from '../types';
@@ -85,13 +85,13 @@ const SwipeableTask: React.FC<{
         setOffset(newOffset);
         
         // Visual feedback
-        // Swipe Right (Positive) -> Categorize (Blue)
-        if (newOffset > 80 && !isTriggered) setIsTriggered(true);
-        if (newOffset < 80 && newOffset > 0 && isTriggered) setIsTriggered(false);
+        // Swipe Left (Negative) -> Categorize (Blue)
+        if (newOffset < -80 && !isTriggered) setIsTriggered(true);
+        if (newOffset > -80 && newOffset < 0 && isTriggered) setIsTriggered(false);
 
-        // Swipe Left (Negative) -> Delete (Red)
-        if (newOffset < -100 && !isTriggered) setIsTriggered(true);
-        if (newOffset > -100 && newOffset < 0 && isTriggered) setIsTriggered(false);
+        // Swipe Right (Positive) -> Delete (Red)
+        if (newOffset > 100 && !isTriggered) setIsTriggered(true);
+        if (newOffset < 100 && newOffset > 0 && isTriggered) setIsTriggered(false);
     }
   };
 
@@ -101,13 +101,13 @@ const SwipeableTask: React.FC<{
     
     if (itemRef.current) itemRef.current.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
 
-    if (offset > 80) {
-        // Right -> Categorize
+    if (offset < -80) {
+        // Left -> Categorize
         setOffset(0); 
         onCategorize(task);
-    } else if (offset < -100) {
-        // Left -> Delete
-        setOffset(-1000); 
+    } else if (offset > 100) {
+        // Right -> Delete
+        setOffset(1000); 
         setTimeout(() => onDelete(task.id), 300);
     } else {
         setOffset(0);
@@ -118,13 +118,16 @@ const SwipeableTask: React.FC<{
     <div className="relative w-full h-full rounded-2xl overflow-hidden group select-none touch-pan-y">
         {/* Background Actions */}
         <div className="absolute inset-0 flex z-0 rounded-2xl overflow-hidden">
-            <div className={`w-full h-full flex items-center justify-start pl-6 text-white font-bold text-sm transition-colors duration-300 ${isTriggered && offset > 0 ? 'bg-blue-600' : 'bg-blue-500'}`}>
+            {/* Left Side (revealed by swiping right) - Red Delete */}
+            <div className={`w-full h-full flex items-center justify-start pl-6 text-white font-bold text-sm transition-colors duration-300 ${isTriggered && offset > 0 ? 'bg-red-600' : 'bg-red-500'}`}>
                 <span className="flex items-center gap-2 transform transition-transform duration-200" style={{ transform: isTriggered && offset > 0 ? 'scale(1.1)' : 'scale(1)' }}>
-                   <LayoutGrid className="w-5 h-5 mr-1" /> {t('list.action.categorize')}
+                   <Trash2 className="w-5 h-5 mr-1" /> {t('list.action.delete')}
                 </span>
             </div>
-            <div className={`absolute right-0 top-0 bottom-0 w-full h-full flex items-center justify-end pr-6 text-white font-bold text-sm transition-colors duration-300 ${isTriggered && offset < 0 ? 'bg-red-600' : 'bg-red-500'}`}>
-                <Trash2 className={`w-5 h-5 ml-1 ${isTriggered && offset < 0 ? 'scale-125' : ''} transition-transform`} />
+            
+            {/* Right Side (revealed by swiping left) - Blue Categorize */}
+            <div className={`absolute right-0 top-0 bottom-0 w-full h-full flex items-center justify-end pr-6 text-white font-bold text-sm transition-colors duration-300 ${isTriggered && offset < 0 ? 'bg-blue-600' : 'bg-blue-500'}`}>
+                <LayoutGrid className={`w-5 h-5 ml-1 ${isTriggered && offset < 0 ? 'scale-125' : ''} transition-transform`} /> {t('list.action.categorize')}
             </div>
         </div>
 
@@ -186,11 +189,11 @@ const SwipeableTask: React.FC<{
                             {priorityLabels[task.category]}
                         </span>
                         
-                        {(task.plannedDate || task.description) && <div className="h-1 w-1 rounded-full bg-gray-300"></div>}
+                        {(task.duration || task.description) && <div className="h-1 w-1 rounded-full bg-gray-300"></div>}
                         
-                        {task.plannedDate && (
+                        {task.duration && (
                             <span className={`flex items-center gap-1 text-[12px] font-medium ${config.text.replace('700', '600')}`}>
-                                <Calendar className="w-3 h-3" /> {task.plannedDate}
+                                <Hourglass className="w-3 h-3" /> {task.duration}
                             </span>
                         )}
 

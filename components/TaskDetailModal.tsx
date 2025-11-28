@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Zap, Calendar, Users, Coffee, Clock, Trash2 } from 'lucide-react';
+import { X, Zap, Calendar, Users, Coffee, Clock, Trash2, Hourglass } from 'lucide-react';
 import { Task, CategoryId } from '../types';
 
 interface TaskDetailModalProps {
@@ -15,6 +15,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose,
   const [description, setDescription] = useState(task?.description || '');
   const [category, setCategory] = useState<CategoryId>(task?.category || 'q1'); // Default to Q1 if was inbox
   const [plannedDate, setPlannedDate] = useState(task?.plannedDate || '');
+  const [duration, setDuration] = useState(task?.duration || '');
   
   const descRef = useRef<HTMLTextAreaElement>(null);
 
@@ -25,6 +26,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose,
       // If task is inbox, default selection to Q1 for easier moving
       setCategory(task.category === 'inbox' ? 'q1' : task.category);
       setPlannedDate(task.plannedDate || '');
+      setDuration(task.duration || '');
     }
   }, [task]);
 
@@ -39,7 +41,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose,
   if (!task) return null;
 
   const handleSave = () => {
-    onUpdate(task.id, { title, description, category, plannedDate });
+    onUpdate(task.id, { title, description, category, plannedDate, duration });
     onClose();
   };
 
@@ -87,15 +89,28 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose,
                     />
                 </div>
 
-                {/* Date Input */}
-                <div>
-                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block px-1">{t('detail.date')}</label>
-                     <input 
-                        type="date"
-                        value={plannedDate}
-                        onChange={(e) => setPlannedDate(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-gray-900 outline-none"
-                     />
+                <div className="grid grid-cols-2 gap-4">
+                    {/* Date Input */}
+                    <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block px-1">{t('detail.date')}</label>
+                        <input 
+                            type="date"
+                            value={plannedDate}
+                            onChange={(e) => setPlannedDate(e.target.value)}
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-gray-900 outline-none text-sm"
+                        />
+                    </div>
+                    {/* Duration Input */}
+                     <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block px-1">Duration</label>
+                        <input 
+                            type="text"
+                            value={duration}
+                            onChange={(e) => setDuration(e.target.value)}
+                            placeholder="e.g. 30m, 2h"
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-gray-900 outline-none text-sm"
+                        />
+                    </div>
                 </div>
 
                 {/* Category Selection (No Inbox) */}

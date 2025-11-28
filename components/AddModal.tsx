@@ -40,8 +40,11 @@ export const AddModal: React.FC<AddModalProps> = ({ isOpen, onClose }) => {
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (title.trim()) {
-      // Add task immediately
-      addTask(title.trim(), category, selectedDate, description.trim());
+      // If adding to Inbox, clear the date so it goes to Backlog/Inbox section.
+      // If adding to a specific quadrant, assume it's planned for the selected date (optional, but standard workflow)
+      const dateToSave = category === 'inbox' ? undefined : selectedDate;
+      
+      addTask(title.trim(), category, dateToSave, description.trim());
       // Close IMMEDIATELY. Visual feedback is handled by App.tsx FAB.
       onClose();
     }

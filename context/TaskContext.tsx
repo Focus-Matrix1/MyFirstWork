@@ -3,7 +3,7 @@ import { Task, CategoryId } from '../types';
 
 interface TaskContextType {
   tasks: Task[];
-  addTask: (title: string, category?: CategoryId, date?: string, description?: string) => void;
+  addTask: (title: string, category?: CategoryId, date?: string, description?: string, duration?: string) => void;
   updateTask: (taskId: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => void;
   moveTask: (taskId: string, targetCategory: CategoryId) => void;
   completeTask: (taskId: string) => void;
@@ -30,9 +30,9 @@ const getTodayString = () => {
 };
 
 const INITIAL_TASKS: Task[] = [
-  { id: '1', title: '修复支付接口', category: 'q1', createdAt: Date.now(), completed: false, plannedDate: getTodayString() },
-  { id: '2', title: '学习 Swift UI', category: 'q2', createdAt: Date.now(), completed: false, plannedDate: getTodayString() },
-  { id: '3', title: '健身 30 分钟', category: 'q2', createdAt: Date.now(), completed: false },
+  { id: '1', title: '修复支付接口', category: 'q1', createdAt: Date.now(), completed: false, plannedDate: getTodayString(), duration: '2h' },
+  { id: '2', title: '学习 Swift UI', category: 'q2', createdAt: Date.now(), completed: false, plannedDate: getTodayString(), duration: '45m' },
+  { id: '3', title: '健身 30 分钟', category: 'q2', createdAt: Date.now(), completed: false, duration: '30m' },
   { id: '4', title: '整理发票报销', category: 'inbox', createdAt: Date.now(), completed: false },
   { id: '5', title: 'Review design assets', category: 'inbox', createdAt: Date.now(), completed: false },
   { id: '6', title: 'Email catch-up', category: 'inbox', createdAt: Date.now(), completed: false },
@@ -83,7 +83,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [hardcoreMode]);
 
-  const addTask = (title: string, category: CategoryId = 'inbox', date?: string, description?: string) => {
+  const addTask = (title: string, category: CategoryId = 'inbox', date?: string, description?: string, duration?: string) => {
     const newTask: Task = {
       id: Math.random().toString(36).substr(2, 9),
       title,
@@ -91,7 +91,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       category,
       createdAt: Date.now(),
       completed: false,
-      plannedDate: date
+      plannedDate: date,
+      duration
     };
     setTasks(prev => [newTask, ...prev]);
     
