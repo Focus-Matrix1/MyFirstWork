@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { LayoutGrid, Trash2, Zap, Calendar, Users, Coffee, CheckCircle2, FileText } from 'lucide-react';
+import { LayoutGrid, Trash2, Zap, Calendar, Users, Coffee, CheckCircle2, FileText, Check } from 'lucide-react';
 import { useTasks } from '../context/TaskContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Task, CategoryId } from '../types';
@@ -24,13 +24,17 @@ const SwipeableTask: React.FC<{
   const directionLock = useRef<'horizontal' | 'vertical' | null>(null);
   const itemRef = useRef<HTMLDivElement>(null);
 
-  const priorityColors = {
-      inbox: 'bg-gray-100 text-gray-500',
-      q1: 'bg-rose-100 text-rose-600',
-      q2: 'bg-blue-100 text-blue-600',
-      q3: 'bg-amber-100 text-amber-600',
-      q4: 'bg-slate-100 text-slate-600'
+  const isInbox = task.category === 'inbox';
+
+  const categoryConfig = {
+      q1: { bg: 'bg-rose-500', border: 'border-rose-100', text: 'text-rose-700', badgeBg: 'bg-rose-100', checkboxBorder: 'border-rose-200', checkboxBg: 'bg-rose-50', checkColor: 'text-rose-500' },
+      q2: { bg: 'bg-blue-500', border: 'border-blue-100', text: 'text-blue-700', badgeBg: 'bg-blue-100', checkboxBorder: 'border-blue-200', checkboxBg: 'bg-blue-50', checkColor: 'text-blue-500' },
+      q3: { bg: 'bg-amber-400', border: 'border-amber-100', text: 'text-amber-700', badgeBg: 'bg-amber-100', checkboxBorder: 'border-amber-200', checkboxBg: 'bg-amber-50', checkColor: 'text-amber-500' },
+      q4: { bg: 'bg-slate-400', border: 'border-slate-100', text: 'text-slate-700', badgeBg: 'bg-slate-100', checkboxBorder: 'border-slate-200', checkboxBg: 'bg-slate-50', checkColor: 'text-slate-500' },
+      inbox: { bg: 'bg-gray-400', border: 'border-gray-200', text: 'text-gray-500', badgeBg: 'bg-gray-100', checkboxBorder: 'border-gray-300', checkboxBg: 'bg-white', checkColor: 'text-gray-500' }
   };
+
+  const config = categoryConfig[task.category] || categoryConfig.inbox;
 
   const priorityLabels: Record<string, string> = {
       inbox: t('matrix.inbox'),
@@ -41,7 +45,6 @@ const SwipeableTask: React.FC<{
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    // Ignore if clicking specific interactive elements
     if ((e.target as HTMLElement).closest('.checkbox-area')) return;
     
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
@@ -62,14 +65,14 @@ const SwipeableTask: React.FC<{
     const dx = currentX - startX.current;
     const dy = currentY - startY.current;
 
-    // --- Direction Lock Logic ---
+    // --- Direction Lock ---
     if (!directionLock.current) {
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
             if (Math.abs(dx) > Math.abs(dy)) {
                 directionLock.current = 'horizontal';
             } else {
                 directionLock.current = 'vertical';
-                isDragging.current = false; // Stop tracking for this swipe
+                isDragging.current = false; 
                 return; 
             }
         }
@@ -77,11 +80,8 @@ const SwipeableTask: React.FC<{
 
     if (directionLock.current === 'horizontal') {
         let newOffset = dx;
-        
-        // Resistance
         if (newOffset > 150) newOffset = 150 + (newOffset - 150) * 0.2; 
         if (newOffset < -150) newOffset = -150 + (newOffset + 150) * 0.2;
-
         setOffset(newOffset);
         
         // Visual feedback
@@ -102,12 +102,12 @@ const SwipeableTask: React.FC<{
     if (itemRef.current) itemRef.current.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
 
     if (offset > 80) {
-        // Right Swipe -> Categorize
-        setOffset(0); // Reset immediately after triggering
+        // Right -> Categorize
+        setOffset(0); 
         onCategorize(task);
     } else if (offset < -100) {
-        // Left Swipe -> Delete
-        setOffset(-1000); // Slide out completely
+        // Left -> Delete
+        setOffset(-1000); 
         setTimeout(() => onDelete(task.id), 300);
     } else {
         setOffset(0);
@@ -115,16 +115,14 @@ const SwipeableTask: React.FC<{
   };
 
   return (
-    <div className="relative min-h-[72px] rounded-2xl overflow-hidden group select-none touch-pan-y mb-3">
+    <div className={`relative rounded-2xl overflow-hidden group select-none touch-pan-y ${isInbox ? 'mb-1 mx-1' : 'mb-3'}`}>
         {/* Background Actions */}
         <div className="absolute inset-0 flex z-0 rounded-2xl overflow-hidden">
-            {/* Left Background (Visible when Swiping Right) -> Categorize (Blue) */}
             <div className={`w-full h-full flex items-center justify-start pl-6 text-white font-bold text-sm transition-colors duration-300 ${isTriggered && offset > 0 ? 'bg-blue-600' : 'bg-blue-500'}`}>
                 <span className="flex items-center gap-2 transform transition-transform duration-200" style={{ transform: isTriggered && offset > 0 ? 'scale(1.1)' : 'scale(1)' }}>
                    <LayoutGrid className="w-5 h-5 mr-1" /> {t('list.action.categorize')}
                 </span>
             </div>
-            {/* Right Background (Visible when Swiping Left) -> Delete (Red) */}
             <div className={`absolute right-0 top-0 bottom-0 w-full h-full flex items-center justify-end pr-6 text-white font-bold text-sm transition-colors duration-300 ${isTriggered && offset < 0 ? 'bg-red-600' : 'bg-red-500'}`}>
                 <Trash2 className={`w-5 h-5 ml-1 ${isTriggered && offset < 0 ? 'scale-125' : ''} transition-transform`} />
             </div>
@@ -138,46 +136,71 @@ const SwipeableTask: React.FC<{
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
             onClick={(e) => {
-                // Only trigger click if not swiping and not clicking checkbox
                 if (Math.abs(offset) < 5 && !(e.target as HTMLElement).closest('.checkbox-area')) {
                     onClick(task);
                 }
             }}
             style={{ transform: `translateX(${offset}px)` }}
-            className="absolute inset-0 bg-white p-4 flex flex-row items-center justify-between border border-gray-100 shadow-sm z-10 rounded-2xl active:scale-[0.99] transition-transform"
+            className={`absolute inset-0 bg-white z-10 transition-transform active:scale-[0.99] cursor-pointer 
+                ${isInbox 
+                    ? 'p-3 flex items-center gap-3 border border-gray-100 rounded-xl shadow-sm hover:shadow-md' 
+                    : `p-4 flex items-start gap-3 border ${config.border} shadow-sm rounded-2xl hover:shadow-md`
+                }
+            `}
         >
-            <div className="flex items-center gap-3 overflow-hidden w-full">
-                <div 
-                    className="checkbox-area w-8 h-8 -ml-1 flex items-center justify-center cursor-pointer shrink-0"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onComplete(task.id);
-                    }}
-                >
-                     <div className={`w-5 h-5 rounded-md border-[1.5px] flex items-center justify-center shrink-0 transition-all duration-300 ${task.completed ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white'}`}>
-                        {task.completed && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
-                     </div>
-                </div>
-                <div className="flex flex-col overflow-hidden w-full">
-                    <span className={`text-[15px] font-medium truncate transition-all ${task.completed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{task.title}</span>
-                    
-                    {/* Meta Row */}
-                    <div className="flex items-center gap-2 mt-0.5 w-full">
-                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider shrink-0 ${priorityColors[task.category] || 'bg-gray-100'}`}>
+            {/* Color Strip for Non-Inbox */}
+            {!isInbox && <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${config.bg}`}></div>}
+
+            {/* Checkbox */}
+            <div 
+                className={`checkbox-area ${isInbox ? 'w-4 h-4' : 'w-5 h-5 mt-0.5'} rounded-md border-[1.5px] flex items-center justify-center shrink-0 transition-all duration-300 cursor-pointer
+                    ${isInbox 
+                        ? 'border-gray-300' 
+                        : `${config.checkboxBorder} ${config.checkboxBg}`
+                    }
+                    ${task.completed ? 'bg-green-500 !border-green-500' : ''}
+                `}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onComplete(task.id);
+                }}
+            >
+                 {task.completed ? (
+                     <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                 ) : (
+                    // Show Check icon on hover for non-inbox tasks (handled via opacity in logic if needed, but here simple static)
+                    !isInbox && <Check className={`w-3 h-3 stroke-[3] opacity-0 group-hover:opacity-100 transition-opacity ${config.checkColor}`} />
+                 )}
+            </div>
+
+            {/* Content Area */}
+            <div className={`flex flex-col flex-1 overflow-hidden ${isInbox ? 'justify-center' : ''}`}>
+                <span className={`${isInbox ? 'text-[14px] font-medium text-gray-700' : 'text-[16px] font-semibold text-gray-900 leading-snug'} truncate transition-all ${task.completed ? 'text-gray-400 line-through' : ''}`}>
+                    {task.title}
+                </span>
+                
+                {/* Meta Row (Only for Non-Inbox) */}
+                {!isInbox && (
+                    <div className="flex items-center gap-2 mt-2">
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold tracking-tight ${config.badgeBg} ${config.text}`}>
                             {priorityLabels[task.category]}
-                         </span>
-                         {task.plannedDate && (
-                             <span className="text-[10px] text-gray-400 flex items-center gap-0.5 shrink-0">
-                                 <Calendar className="w-3 h-3" /> {task.plannedDate}
-                             </span>
-                         )}
-                         {task.description && (
-                            <span className="text-[10px] text-gray-400 flex items-center gap-0.5 truncate ml-1">
-                                <FileText className="w-3 h-3 shrink-0" /> <span className="truncate">{task.description}</span>
+                        </span>
+                        
+                        {(task.plannedDate || task.description) && <div className="h-1 w-1 rounded-full bg-gray-300"></div>}
+                        
+                        {task.plannedDate && (
+                            <span className={`flex items-center gap-1 text-[12px] font-medium ${config.text.replace('700', '600')}`}>
+                                <Calendar className="w-3 h-3" /> {task.plannedDate}
                             </span>
-                         )}
+                        )}
+
+                        {task.description && (
+                            <span className="text-[12px] text-gray-500 truncate max-w-[120px]">
+                                {task.description}
+                            </span>
+                        )}
                     </div>
-                </div>
+                )}
             </div>
         </div>
     </div>
@@ -213,25 +236,39 @@ export const ListView: React.FC = () => {
     <div className="w-full h-full flex flex-col bg-[#F5F7FA] relative">
       <WeeklyCalendar />
 
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-32 pt-2">
-        {sortedPlanned.length > 0 && (
-            <div className="mb-6 animate-fade-in">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">{t('list.section.planned')}</h3>
-                {sortedPlanned.map(task => (
-                    <SwipeableTask key={task.id} task={task} onCategorize={handleCategorize} onDelete={deleteTask} onComplete={completeTask} onClick={setEditingTask} t={t} />
-                ))}
-            </div>
-        )}
-
-        {new Date().toISOString().split('T')[0] === selectedDate && sortedBacklog.length > 0 && (
-            <div className="mb-6 animate-fade-in">
-                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">{t('list.section.backlog')}</h3>
+      <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-32 pt-4">
+        
+        {/* Inbox / Backlog Section (Styled as Inbox Container) */}
+        {sortedBacklog.length > 0 && (
+            <div className="bg-gray-50/80 rounded-2xl p-1 border border-dashed border-gray-300 mb-6">
+                 <div className="px-3 py-2 flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('list.section.backlog')}</span>
+                    </div>
+                    <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-md font-bold">{sortedBacklog.length}</span>
+                </div>
                  {sortedBacklog.map(task => (
-                    <SwipeableTask key={task.id} task={task} onCategorize={handleCategorize} onDelete={deleteTask} onComplete={completeTask} onClick={setEditingTask} t={t} />
+                     <div key={task.id} className="relative h-[52px]">
+                        <SwipeableTask task={task} onCategorize={handleCategorize} onDelete={deleteTask} onComplete={completeTask} onClick={setEditingTask} t={t} />
+                     </div>
                 ))}
             </div>
         )}
 
+        {/* Planned Tasks Section */}
+        {sortedPlanned.length > 0 && (
+            <div className="mb-6 animate-fade-in space-y-3">
+                {/* <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">{t('list.section.planned')}</h3> */}
+                {sortedPlanned.map(task => (
+                    <div key={task.id} className="relative h-[84px]">
+                        <SwipeableTask task={task} onCategorize={handleCategorize} onDelete={deleteTask} onComplete={completeTask} onClick={setEditingTask} t={t} />
+                    </div>
+                ))}
+            </div>
+        )}
+
+        {/* Completed Section */}
         {completedTasks.length > 0 && (
             <div className="mb-6 animate-fade-in opacity-60">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">{t('list.section.completed')}</h3>
