@@ -5,6 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { Task, CategoryId } from '../types';
 import { WeeklyCalendar } from './WeeklyCalendar';
 import { TaskDetailModal } from './TaskDetailModal';
+import { CategorySheet } from './CategorySheet';
 
 // --- Swipeable Task Item ---
 const SwipeableTask: React.FC<{ 
@@ -119,16 +120,24 @@ const SwipeableTask: React.FC<{
     <div className="relative w-full h-full rounded-2xl overflow-hidden group select-none touch-pan-y">
         {/* Background Actions */}
         <div className="absolute inset-0 flex z-0 rounded-2xl overflow-hidden">
-            {/* Left Side (revealed by swiping right) - Blue Categorize */}
-            <div className={`w-full h-full flex items-center justify-start pl-6 text-white font-bold text-sm transition-colors duration-300 ${isTriggered && offset > 0 ? 'bg-blue-600' : 'bg-blue-500'}`}>
-                <span className="flex items-center gap-2 transform transition-transform duration-200" style={{ transform: isTriggered && offset > 0 ? 'scale(1.1)' : 'scale(1)' }}>
+            {/* Left Side (Blue - Categorize) - Visible when swiping Right (offset > 0) */}
+            <div 
+                className={`absolute left-0 top-0 bottom-0 w-full h-full flex items-center justify-start pl-6 text-white font-bold text-sm transition-all duration-300 ${isTriggered ? 'bg-blue-600' : 'bg-blue-500'}`}
+                style={{ opacity: offset > 0 ? 1 : 0 }}
+            >
+                <span className="flex items-center gap-2 transform transition-transform duration-200" style={{ transform: isTriggered ? 'scale(1.1)' : 'scale(1)' }}>
                    <LayoutGrid className="w-5 h-5 mr-1" /> {t('list.action.categorize')}
                 </span>
             </div>
             
-            {/* Right Side (revealed by swiping left) - Red Delete */}
-            <div className={`absolute right-0 top-0 bottom-0 w-full h-full flex items-center justify-end pr-6 text-white font-bold text-sm transition-colors duration-300 ${isTriggered && offset < 0 ? 'bg-red-600' : 'bg-red-500'}`}>
-                <Trash2 className={`w-5 h-5 ml-1 ${isTriggered && offset < 0 ? 'scale-125' : ''} transition-transform`} /> {t('list.action.delete')}
+            {/* Right Side (Red - Delete) - Visible when swiping Left (offset < 0) */}
+            <div 
+                className={`absolute right-0 top-0 bottom-0 w-full h-full flex items-center justify-end pr-6 text-white font-bold text-sm transition-all duration-300 ${isTriggered ? 'bg-red-600' : 'bg-red-500'}`}
+                style={{ opacity: offset < 0 ? 1 : 0 }}
+            >
+                <span className="flex items-center gap-2 transform transition-transform duration-200" style={{ transform: isTriggered ? 'scale(1.1)' : 'scale(1)' }}>
+                    {t('list.action.delete')} <Trash2 className="w-5 h-5 ml-1" />
+                </span>
             </div>
         </div>
 
@@ -172,7 +181,7 @@ const SwipeableTask: React.FC<{
                  {task.completed ? (
                      <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                  ) : (
-                    // Show Check icon on hover for non-inbox tasks (handled via opacity in logic if needed, but here simple static)
+                    // Show Check icon on hover for non-inbox tasks
                     !isInbox && <Check className={`w-3 h-3 stroke-[3] opacity-0 group-hover:opacity-100 transition-opacity ${config.checkColor}`} />
                  )}
             </div>
@@ -199,7 +208,7 @@ const SwipeableTask: React.FC<{
                         )}
 
                         {task.description && (
-                            <span className="text-[12px] text-gray-500 truncate max-w-[120px]">
+                            <span className="text-[12px] text-gray-500 truncate max-w-[100px]">
                                 {task.description}
                             </span>
                         )}
@@ -212,9 +221,10 @@ const SwipeableTask: React.FC<{
 };
 
 export const ListView: React.FC = () => {
-  const { tasks, completeTask, deleteTask, selectedDate, updateTask } = useTasks();
+  const { tasks, completeTask, deleteTask, selectedDate, updateTask, moveTask } = useTasks();
   const { t } = useLanguage();
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [categorizingTask, setCategorizingTask] = useState<Task | null>(null);
 
   const tasksForDate = tasks.filter(task => !task.completed && task.plannedDate === selectedDate);
   const backlogTasks = tasks.filter(task => !task.completed && !task.plannedDate);
@@ -233,7 +243,7 @@ export const ListView: React.FC = () => {
   const sortedBacklog = sortTasks(backlogTasks);
 
   const handleCategorize = (task: Task) => {
-      setEditingTask(task);
+      setCategorizingTask(task);
   };
 
   return (
@@ -242,7 +252,7 @@ export const ListView: React.FC = () => {
 
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-32 pt-4">
         
-        {/* Inbox / Backlog Section (Styled as Inbox Container) */}
+        {/* Inbox / Backlog Section */}
         {sortedBacklog.length > 0 && (
             <div className="bg-gray-50/80 rounded-2xl p-1 border border-dashed border-gray-300 mb-6">
                  <div className="px-3 py-2 flex justify-between items-center">
@@ -263,7 +273,6 @@ export const ListView: React.FC = () => {
         {/* Planned Tasks Section */}
         {sortedPlanned.length > 0 && (
             <div className="mb-6 animate-fade-in space-y-3">
-                {/* <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">{t('list.section.planned')}</h3> */}
                 {sortedPlanned.map(task => (
                     <div key={task.id} className="relative h-[84px] mb-3">
                         <SwipeableTask task={task} onCategorize={handleCategorize} onDelete={deleteTask} onComplete={completeTask} onClick={setEditingTask} t={t} />
@@ -299,6 +308,14 @@ export const ListView: React.FC = () => {
 
       {editingTask && (
         <TaskDetailModal task={editingTask} onClose={() => setEditingTask(null)} onUpdate={updateTask} onDelete={deleteTask} t={t} />
+      )}
+
+      {categorizingTask && (
+        <CategorySheet 
+            task={categorizingTask} 
+            onClose={() => setCategorizingTask(null)} 
+            onMove={moveTask} 
+        />
       )}
     </div>
   );

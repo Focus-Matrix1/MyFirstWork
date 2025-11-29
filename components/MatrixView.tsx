@@ -68,8 +68,8 @@ const Quadrant: React.FC<{
           </div>
         ))}
         {tasks.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full opacity-30 select-none pointer-events-none">
-             <span className="text-[10px] font-medium tracking-wider uppercase">{emptyText}</span>
+          <div className="flex flex-col items-center justify-center h-full opacity-40 select-none pointer-events-none px-4">
+             <span className="text-[10px] font-bold tracking-wider uppercase text-center leading-relaxed text-slate-400">{emptyText}</span>
           </div>
         )}
       </div>
@@ -222,7 +222,7 @@ export const MatrixView: React.FC = () => {
           onComplete={completeTask}
           onDragStart={handleDragStart}
           onClickTask={setEditingTask}
-          emptyText={t('matrix.empty')}
+          emptyText={t('matrix.q2.empty')}
         />
         <Quadrant 
           id="q3" 
