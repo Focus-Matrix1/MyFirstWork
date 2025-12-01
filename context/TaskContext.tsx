@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { Task, CategoryId } from '../types';
 
 interface TaskContextType {
@@ -68,6 +68,39 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [inboxShakeTrigger, setInboxShakeTrigger] = useState(0);
   const [addSuccessTrigger, setAddSuccessTrigger] = useState(0);
 
+  // Audio Context for "Ding" sound
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const playSuccessSound = () => {
+    try {
+        if (!audioCtxRef.current) {
+            audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
+        const ctx = audioCtxRef.current;
+        if (ctx.state === 'suspended') {
+            ctx.resume();
+        }
+
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(800, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+        
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + 0.3);
+    } catch (e) {
+        console.warn("Audio playback failed", e);
+    }
+  };
+
   useEffect(() => {
     try {
       localStorage.setItem('focus-matrix-tasks', JSON.stringify(tasks));
@@ -116,6 +149,21 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setTasks(prev => prev.map(t => {
         if (t.id !== taskId) return t;
         const isNowCompleted = !t.completed;
+        
+        // Haptic Feedback & Sound Logic on Completion
+        if (isNowCompleted) {
+             playSuccessSound();
+             if (navigator.vibrate) {
+                 if (t.category === 'q1' || t.category === 'q2') {
+                     // Heavy impact
+                     navigator.vibrate([40, 30, 40]); 
+                 } else {
+                     // Light tap
+                     navigator.vibrate(20);
+                 }
+             }
+        }
+
         return {
             ...t,
             completed: isNowCompleted,
