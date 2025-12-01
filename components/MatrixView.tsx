@@ -38,8 +38,8 @@ const Quadrant: React.FC<{
         <div className="flex items-start gap-2 mb-0.5">
           <div className={`${colorClass} mt-0.5`}>{icon}</div>
           <div className="flex flex-col">
-              <h3 className={`text-[14px] font-bold leading-tight ${colorClass.replace('text-', 'text-slate-')}`}>{title}</h3>
-              <span className={`text-[10px] font-medium opacity-70 ${colorClass.replace('text-', 'text-slate-')}`}>{subtitle}</span>
+              <h3 className="text-[14px] font-bold leading-tight text-slate-700">{title}</h3>
+              <span className="text-[10px] font-medium text-slate-500">{subtitle}</span>
           </div>
         </div>
       </div>
@@ -216,7 +216,7 @@ export const MatrixView: React.FC = () => {
           subtitle={t('q2.subtitle')}
           icon={<Calendar className="w-4 h-4" />} 
           colorClass="text-blue-600" 
-          bgClass="bg-blue-50/40" 
+          bgClass="bg-blue-50" 
           tasks={getTasksByCategory('q2')} 
           highlighted={highlightedZone === 'q2'}
           onComplete={completeTask}
@@ -244,7 +244,7 @@ export const MatrixView: React.FC = () => {
           subtitle={t('q4.subtitle')}
           icon={<Coffee className="w-4 h-4" />} 
           colorClass="text-slate-500" 
-          bgClass="bg-slate-50/50" 
+          bgClass="bg-slate-50" 
           tasks={getTasksByCategory('q4')} 
           highlighted={highlightedZone === 'q4'}
           onComplete={completeTask}
