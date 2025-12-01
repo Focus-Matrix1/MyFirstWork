@@ -82,19 +82,28 @@ const SwipeableTask: React.FC<{
 
     if (directionLock.current === 'horizontal') {
         let newOffset = dx;
-        // Limit swipe range
-        if (newOffset > 150) newOffset = 150 + (newOffset - 150) * 0.2; 
-        if (newOffset < -150) newOffset = -150 + (newOffset + 150) * 0.2;
-        setOffset(newOffset);
-        
-        // Visual feedback
-        // Swipe Right (Positive) -> Categorize (Blue)
-        if (newOffset > 80 && !isTriggered) setIsTriggered(true);
-        if (newOffset < 80 && newOffset > 0 && isTriggered) setIsTriggered(false);
 
-        // Swipe Left (Negative) -> Delete (Red)
-        if (newOffset < -100 && !isTriggered) setIsTriggered(true);
-        if (newOffset > -100 && newOffset < 0 && isTriggered) setIsTriggered(false);
+        // Right Swipe (Categorize)
+        if (newOffset > 0) {
+             if (newOffset > 150) newOffset = 150 + (newOffset - 150) * 0.2;
+             
+             if (newOffset > 80 && !isTriggered) setIsTriggered(true);
+             if (newOffset < 80 && isTriggered) setIsTriggered(false);
+        } 
+        // Left Swipe (Delete) - Heavy Damping
+        else {
+             // Stage 1: Linear up to -80
+             // Stage 2: Damped after -80 (Resistance)
+             if (newOffset < -80) {
+                 newOffset = -80 + (newOffset + 80) * 0.4;
+             }
+             
+             // Trigger threshold at -150 (requires significantly more finger movement)
+             if (newOffset < -150 && !isTriggered) setIsTriggered(true);
+             if (newOffset > -150 && isTriggered) setIsTriggered(false);
+        }
+
+        setOffset(newOffset);
     }
   };
 
@@ -108,7 +117,7 @@ const SwipeableTask: React.FC<{
         // Right -> Categorize
         setOffset(0); 
         onCategorize(task);
-    } else if (offset < -100) {
+    } else if (offset < -150) { // Higher threshold to prevent accidental delete
         // Left -> Delete
         setOffset(-1000); 
         setTimeout(() => onDelete(task.id), 300);
