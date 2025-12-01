@@ -18,13 +18,14 @@ const SwipeableTask: React.FC<{
   t: (key: string) => string;
 }> = ({ task, onCategorize, onDelete, onComplete, onClick, t }) => {
   const [offset, setOffset] = useState(0);
-  const [isTriggered, setIsTriggered] = useState(false);
   
   const startX = useRef(0);
   const startY = useRef(0);
   const isDragging = useRef(false);
   const directionLock = useRef<'horizontal' | 'vertical' | null>(null);
   const itemRef = useRef<HTMLDivElement>(null);
+
+  const ACTION_WIDTH = 80; // Width of the action buttons
 
   const isInbox = task.category === 'inbox';
 
@@ -54,7 +55,6 @@ const SwipeableTask: React.FC<{
     directionLock.current = null;
     startX.current = e.clientX;
     startY.current = e.clientY;
-    setIsTriggered(false);
     
     if (itemRef.current) itemRef.current.style.transition = 'none';
   };
@@ -81,27 +81,47 @@ const SwipeableTask: React.FC<{
     }
 
     if (directionLock.current === 'horizontal') {
-        let newOffset = dx;
-
-        // Right Swipe (Categorize)
-        if (newOffset > 0) {
-             if (newOffset > 150) newOffset = 150 + (newOffset - 150) * 0.2;
-             
-             if (newOffset > 80 && !isTriggered) setIsTriggered(true);
-             if (newOffset < 80 && isTriggered) setIsTriggered(false);
-        } 
-        // Left Swipe (Delete) - Heavy Damping
-        else {
-             // Stage 1: Linear up to -80
-             // Stage 2: Damped after -80 (Resistance)
-             if (newOffset < -80) {
-                 newOffset = -80 + (newOffset + 80) * 0.4;
-             }
-             
-             // Trigger threshold at -150 (requires significantly more finger movement)
-             if (newOffset < -150 && !isTriggered) setIsTriggered(true);
-             if (newOffset > -150 && isTriggered) setIsTriggered(false);
+        // Calculate new offset based on current position relative to start
+        // NOTE: If already open, we need to adjust start logic or just add to current offset state?
+        // Simple approach: Always drag from 0 or current snapped state.
+        // For simplicity, we assume drag starts from visually 0 (closed) or snapped. 
+        // But handling drag-from-open is complex. 
+        // Let's stick to: Drag modifies offset from the value at start.
+        // But `offset` state isn't updated during drag start. 
+        // Let's calculate `newOffset` based on `offset` (at start) + `dx`.
+        // However, `offset` is state. `startX` is ref.
+        // Let's assume start offset is effectively what the state is.
+        // But we need to capture the offset at touch start.
+        // We didn't capture it. Let's rely on `dx` added to "base".
+        // Actually, simplest is:
+        
+        // Logic: newOffset = dx. (Assuming starting from closed).
+        // If we want to support dragging from open, we need `startOffset` ref.
+        // Let's implement simpler behavior: Drag always calculates absolute displacement from touch start.
+        // If it was open, it snaps back immediately on touch start? 
+        // Let's stick to "Drag from Closed" for robust implementation or handle `startOffset`.
+        
+        // Let's add startOffset ref.
+        // But for now, let's assume we start from 0 for simplicity, or if open, a tap closes it.
+        // We will handle "Tap to close" separately.
+        
+        let newOffset = dx; // Assuming start from 0
+        
+        // If the item was already open, this logic is flawed.
+        // However, we can enforce "Tap to Close" if open. 
+        // So `handlePointerDown` could check `offset !== 0` and just prepare to close on Up without dragging?
+        // Or we allow dragging. Let's stick to standard behavior:
+        // If open, user usually taps to close.
+        // If closed, user drags.
+        
+        if (Math.abs(offset) > 10) {
+             // If already open, don't allow drag, just let PointerUp handle the close tap.
+             return;
         }
+
+        // Apply Resistance if dragging past action width
+        if (newOffset > ACTION_WIDTH) newOffset = ACTION_WIDTH + (newOffset - ACTION_WIDTH) * 0.2;
+        if (newOffset < -ACTION_WIDTH) newOffset = -ACTION_WIDTH + (newOffset + ACTION_WIDTH) * 0.2;
 
         setOffset(newOffset);
     }
@@ -113,41 +133,63 @@ const SwipeableTask: React.FC<{
     
     if (itemRef.current) itemRef.current.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
 
-    if (offset > 80) {
-        // Right -> Categorize
-        setOffset(0); 
-        onCategorize(task);
-    } else if (offset < -150) { // Higher threshold to prevent accidental delete
-        // Left -> Delete
-        setOffset(-1000); 
-        setTimeout(() => onDelete(task.id), 300);
+    // Snap Logic
+    if (offset > ACTION_WIDTH / 2) {
+        // Snap Open Right (Reveal Left Button)
+        setOffset(ACTION_WIDTH); 
+    } else if (offset < -ACTION_WIDTH / 2) { 
+        // Snap Open Left (Reveal Right Button)
+        setOffset(-ACTION_WIDTH);
     } else {
+        // Snap Close
         setOffset(0);
     }
   };
 
+  const handleContentClick = () => {
+      if (Math.abs(offset) > 5) {
+          // If open, close it
+          setOffset(0);
+      } else {
+          // If closed, open details
+          onClick(task);
+      }
+  };
+
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden group select-none touch-pan-y">
-        {/* Background Actions */}
-        <div className="absolute inset-0 flex z-0 rounded-2xl overflow-hidden">
-            {/* Left Side (Blue - Categorize) - Visible when swiping Right (offset > 0) */}
-            <div 
-                className={`absolute left-0 top-0 bottom-0 w-full h-full flex items-center justify-start pl-6 text-white font-bold text-sm transition-all duration-300 ${isTriggered ? 'bg-blue-600' : 'bg-blue-500'}`}
-                style={{ opacity: offset > 0 ? 1 : 0 }}
-            >
-                <span className="flex items-center gap-2 transform transition-transform duration-200" style={{ transform: isTriggered ? 'scale(1.1)' : 'scale(1)' }}>
-                   <LayoutGrid className="w-5 h-5 mr-1" /> {t('list.action.categorize')}
-                </span>
+        {/* Background Actions (Clickable Buttons) */}
+        <div className="absolute inset-0 flex z-0">
+            {/* Left Button (Categorize) - Visible when offset > 0 */}
+            <div className="absolute left-0 top-0 bottom-0 flex">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onCategorize(task);
+                        setOffset(0);
+                    }}
+                    className="h-full bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs flex flex-col items-center justify-center gap-1 transition-colors"
+                    style={{ width: ACTION_WIDTH }}
+                >
+                    <LayoutGrid className="w-5 h-5" />
+                    {t('list.action.categorize')}
+                </button>
             </div>
             
-            {/* Right Side (Red - Delete) - Visible when swiping Left (offset < 0) */}
-            <div 
-                className={`absolute right-0 top-0 bottom-0 w-full h-full flex items-center justify-end pr-6 text-white font-bold text-sm transition-all duration-300 ${isTriggered ? 'bg-red-600' : 'bg-red-500'}`}
-                style={{ opacity: offset < 0 ? 1 : 0 }}
-            >
-                <span className="flex items-center gap-2 transform transition-transform duration-200" style={{ transform: isTriggered ? 'scale(1.1)' : 'scale(1)' }}>
-                    {t('list.action.delete')} <Trash2 className="w-5 h-5 ml-1" />
-                </span>
+            {/* Right Button (Delete) - Visible when offset < 0 */}
+            <div className="absolute right-0 top-0 bottom-0 flex justify-end">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(task.id);
+                        setOffset(0);
+                    }}
+                    className="h-full bg-red-500 hover:bg-red-600 text-white font-bold text-xs flex flex-col items-center justify-center gap-1 transition-colors"
+                    style={{ width: ACTION_WIDTH }}
+                >
+                    <Trash2 className="w-5 h-5" />
+                    {t('list.action.delete')}
+                </button>
             </div>
         </div>
 
@@ -159,8 +201,8 @@ const SwipeableTask: React.FC<{
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
             onClick={(e) => {
-                if (Math.abs(offset) < 5 && !(e.target as HTMLElement).closest('.checkbox-area')) {
-                    onClick(task);
+                if (!(e.target as HTMLElement).closest('.checkbox-area')) {
+                    handleContentClick();
                 }
             }}
             style={{ transform: `translateX(${offset}px)` }}
