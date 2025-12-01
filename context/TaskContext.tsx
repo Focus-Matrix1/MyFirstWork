@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Task, CategoryId } from '../types';
 
@@ -112,7 +113,15 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const completeTask = (taskId: string) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t));
+    setTasks(prev => prev.map(t => {
+        if (t.id !== taskId) return t;
+        const isNowCompleted = !t.completed;
+        return {
+            ...t,
+            completed: isNowCompleted,
+            completedAt: isNowCompleted ? Date.now() : undefined
+        };
+    }));
   };
 
   const deleteTask = (taskId: string) => {

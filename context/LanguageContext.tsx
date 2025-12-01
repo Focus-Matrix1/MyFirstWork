@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 type Language = 'en' | 'zh';
@@ -44,16 +45,16 @@ const translations: Record<Language, Record<string, string>> = {
     'detail.delete': 'Delete Task',
     'detail.created': 'Created',
     'detail.category': 'Category',
-    'detail.date': 'Planned Date',
+    'detail.date': 'Planned Completion Date',
 
     'stats.title': 'Weekly Report',
-    'stats.tasks_completed': 'Tasks Completed',
+    'stats.tasks_completed': 'Completed',
     'stats.focus_score': 'Focus Score',
-    'stats.avg_time': 'Avg Time',
-    'stats.vs_last_week': 'vs last week',
+    'stats.focus_score_desc': '(Q1+Q2) / Total',
+    'stats.total_time': 'Focus Time',
+    'stats.trend': '7-Day Trend',
+    'stats.distribution': 'Energy Distribution',
     'stats.quote': '“First Things First” doesn’t mean doing everything, but investing your best energy in Q2.',
-    'stats.badge.title': 'Deep Work Master',
-    'stats.badge.desc': 'Completed 5 Q1 tasks in a row',
 
     'user.guest': 'Guest User',
     'user.tier': 'Free Tier',
@@ -65,7 +66,7 @@ const translations: Record<Language, Record<string, string>> = {
     'user.clear.confirm': 'Are you sure you want to clear all tasks? This cannot be undone.',
     'user.install': 'Install App',
     'user.install.desc': 'Add to Home Screen',
-    'user.version': 'Focus Matrix v1.4.0',
+    'user.version': 'Focus Matrix v1.5.18',
 
     'add.title': 'New Task',
     'add.placeholder': 'What needs to be done?',
@@ -113,16 +114,16 @@ const translations: Record<Language, Record<string, string>> = {
     'detail.delete': '删除任务',
     'detail.created': '创建时间',
     'detail.category': '所属分类',
-    'detail.date': '计划日期',
+    'detail.date': '计划完成日期',
 
     'stats.title': '周报',
     'stats.tasks_completed': '完成任务',
     'stats.focus_score': '专注分',
-    'stats.avg_time': '平均耗时',
-    'stats.vs_last_week': '对比上周',
+    'stats.focus_score_desc': '(Q1+Q2) / 总完成',
+    'stats.total_time': '投入时间',
+    'stats.trend': '7日趋势',
+    'stats.distribution': '精力分布',
     'stats.quote': '“要事第一”并不是指把所有事都做完，而是把最大的精力投放在第二象限。',
-    'stats.badge.title': '深度工作大师',
-    'stats.badge.desc': '连续完成 5 个第一象限任务',
 
     'user.guest': '访客用户',
     'user.tier': '免费版',
@@ -134,7 +135,7 @@ const translations: Record<Language, Record<string, string>> = {
     'user.clear.confirm': '确定要清空所有任务吗？此操作无法撤销。',
     'user.install': '安装应用',
     'user.install.desc': '添加到主屏幕以获得最佳体验',
-    'user.version': 'Focus Matrix v1.4.0',
+    'user.version': 'Focus Matrix v1.5.18',
 
     'add.title': '新任务',
     'add.placeholder': '准备做点什么？',
