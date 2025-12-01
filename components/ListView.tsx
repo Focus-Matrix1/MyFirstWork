@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { LayoutGrid, Trash2, CheckCircle2, Check, Hourglass } from 'lucide-react';
+import { LayoutGrid, Trash2, CheckCircle2, Check, Hourglass, ChevronDown, ChevronRight } from 'lucide-react';
 import { useTasks } from '../context/TaskContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Task, CategoryId } from '../types';
@@ -209,7 +209,7 @@ const SwipeableTask: React.FC<{
                         )}
 
                         {task.description && (
-                            <span className="text-[12px] text-gray-500 truncate max-w-[100px]">
+                            <span className="text-[12px] text-gray-500 truncate max-w-[140px]">
                                 {task.description}
                             </span>
                         )}
@@ -227,6 +227,7 @@ export const ListView: React.FC = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [categorizingTask, setCategorizingTask] = useState<Task | null>(null);
   const [showInboxZeroAnim, setShowInboxZeroAnim] = useState(false);
+  const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
 
   const tasksForDate = tasks.filter(task => !task.completed && task.plannedDate === selectedDate);
   const backlogTasks = tasks.filter(task => !task.completed && task.category === 'inbox' && !task.plannedDate);
@@ -306,20 +307,33 @@ export const ListView: React.FC = () => {
             </div>
         )}
 
-        {/* Completed Section */}
+        {/* Completed Section (Collapsible) */}
         {completedTasks.length > 0 && (
-            <div className="mb-6 animate-fade-in opacity-60">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">{t('list.section.completed')}</h3>
-                {completedTasks.map(task => (
-                     <div key={task.id} className="relative h-[64px] mb-3">
-                        <div className="absolute inset-0 bg-gray-50 p-4 flex items-center gap-3 border border-gray-100 shadow-sm rounded-2xl">
-                             <div onClick={() => completeTask(task.id)} className="w-5 h-5 rounded-md bg-green-500 flex items-center justify-center shrink-0 cursor-pointer">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+            <div className="mb-6 animate-fade-in">
+                <button 
+                    onClick={() => setIsCompletedExpanded(!isCompletedExpanded)}
+                    className="flex items-center gap-2 mb-3 ml-1 group"
+                >
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest group-hover:text-gray-600 transition-colors">
+                        {t('list.section.completed')} ({completedTasks.length})
+                    </span>
+                    {isCompletedExpanded ? <ChevronDown className="w-3 h-3 text-gray-400" /> : <ChevronRight className="w-3 h-3 text-gray-400" />}
+                </button>
+                
+                {isCompletedExpanded && (
+                    <div className="animate-slide-up space-y-3">
+                        {completedTasks.map(task => (
+                             <div key={task.id} className="relative h-[64px] mb-3">
+                                <div className="absolute inset-0 bg-gray-50 p-4 flex items-center gap-3 border border-gray-100 shadow-sm rounded-2xl opacity-80">
+                                     <div onClick={() => completeTask(task.id)} className="w-5 h-5 rounded-md bg-green-500 flex items-center justify-center shrink-0 cursor-pointer">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                                     </div>
+                                     <span className="text-[15px] font-medium text-gray-400 line-through truncate">{task.title}</span>
+                                </div>
                              </div>
-                             <span className="text-[15px] font-medium text-gray-400 line-through truncate">{task.title}</span>
-                        </div>
-                     </div>
-                ))}
+                        ))}
+                    </div>
+                )}
             </div>
         )}
 
