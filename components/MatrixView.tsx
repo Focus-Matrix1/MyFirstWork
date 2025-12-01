@@ -53,10 +53,10 @@ const Quadrant: React.FC<{
                 onDragStart(e, task);
             }}
             onClick={() => onClickTask(task)}
-            className={`flex items-center gap-3 p-3 bg-white rounded-xl shadow-sm border border-transparent active:scale-[0.98] transition-all cursor-grab active:cursor-grabbing hover:shadow-md fade-in group touch-none`}
+            className={`flex items-center gap-1.5 p-2 bg-white rounded-xl shadow-sm border border-transparent active:scale-[0.98] transition-all cursor-grab active:cursor-grabbing hover:shadow-md fade-in group touch-none`}
           >
             <div
-              className="checkbox-area w-7 h-7 -ml-1 flex items-center justify-center cursor-pointer"
+              className="checkbox-area w-6 h-6 flex items-center justify-center cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 onComplete(task.id);
@@ -64,7 +64,7 @@ const Quadrant: React.FC<{
             >
                 <div className="w-5 h-5 rounded-md border-[1.5px] border-gray-200 bg-gray-50 flex items-center justify-center shrink-0 hover:border-green-400 hover:bg-green-50 transition-colors group-hover:border-gray-300 pointer-events-none"></div>
             </div>
-            <span className="text-[13px] text-gray-800 font-medium truncate pt-0.5 select-none">{task.title}</span>
+            <span className="text-[13px] text-gray-800 font-medium truncate tracking-tight pt-0.5 select-none">{task.title}</span>
           </div>
         ))}
         {tasks.length === 0 && (
@@ -193,7 +193,7 @@ export const MatrixView: React.FC = () => {
       </div>
 
       {/* Matrix Container */}
-      <div className="flex-1 mx-4 mb-[calc(88px+env(safe-area-inset-bottom))] bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden grid grid-cols-2 grid-rows-[1.55fr_1fr] gap-px border border-gray-100 relative select-none">
+      <div className="flex-1 mx-4 mb-[calc(110px+env(safe-area-inset-bottom))] bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden grid grid-cols-2 grid-rows-2 gap-px border border-gray-100 relative select-none">
          <div className="absolute inset-0 bg-gray-100 pointer-events-none"></div>
 
         <Quadrant 
