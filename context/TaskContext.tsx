@@ -13,6 +13,7 @@ interface TaskContextType {
   hardcoreMode: boolean;
   toggleHardcoreMode: () => void;
   clearAllTasks: () => void;
+  restoreTasks: (tasks: Task[]) => void;
   selectedDate: string;
   setSelectedDate: (date: string) => void;
   inboxShakeTrigger: number;
@@ -180,6 +181,10 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setTasks([]);
   };
 
+  const restoreTasks = (newTasks: Task[]) => {
+      setTasks(newTasks);
+  };
+
   const getTasksByCategory = (category: CategoryId) => {
     return tasks.filter(t => t.category === category && !t.completed);
   };
@@ -198,6 +203,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       hardcoreMode,
       toggleHardcoreMode,
       clearAllTasks,
+      restoreTasks,
       selectedDate,
       setSelectedDate,
       inboxShakeTrigger,
