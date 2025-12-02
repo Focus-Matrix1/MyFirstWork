@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useTasks } from '../context/TaskContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -115,16 +116,17 @@ export const AddModal: React.FC<AddModalProps> = ({ isOpen, onClose }) => {
             {/* Category Selector */}
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
                 <button
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => setCategory('inbox')}
                     className={`px-3 py-2 rounded-xl border flex items-center gap-2 shrink-0 transition-colors ${category === 'inbox' ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-500'}`}
                 >
                     <div className={`w-2 h-2 rounded-full ${category === 'inbox' ? 'bg-white' : 'bg-gray-400'}`}></div>
                     <span className="text-xs font-bold">{t('matrix.inbox')}</span>
                 </button>
-                <button onClick={() => setCategory('q1')} className={`px-3 py-2 rounded-xl border flex items-center gap-2 shrink-0 transition-colors ${category === 'q1' ? 'bg-rose-500 text-white border-rose-500' : 'border-gray-200 text-gray-500'}`}><Zap className="w-3 h-3" /><span className="text-xs font-bold">Q1</span></button>
-                <button onClick={() => setCategory('q2')} className={`px-3 py-2 rounded-xl border flex items-center gap-2 shrink-0 transition-colors ${category === 'q2' ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-200 text-gray-500'}`}><Calendar className="w-3 h-3" /><span className="text-xs font-bold">Q2</span></button>
-                <button onClick={() => setCategory('q3')} className={`px-3 py-2 rounded-xl border flex items-center gap-2 shrink-0 transition-colors ${category === 'q3' ? 'bg-amber-500 text-white border-amber-500' : 'border-gray-200 text-gray-500'}`}><Users className="w-3 h-3" /><span className="text-xs font-bold">Q3</span></button>
-                <button onClick={() => setCategory('q4')} className={`px-3 py-2 rounded-xl border flex items-center gap-2 shrink-0 transition-colors ${category === 'q4' ? 'bg-slate-500 text-white border-slate-500' : 'border-gray-200 text-gray-500'}`}><Coffee className="w-3 h-3" /><span className="text-xs font-bold">Q4</span></button>
+                <button onMouseDown={(e) => e.preventDefault()} onClick={() => setCategory('q1')} className={`px-3 py-2 rounded-xl border flex items-center gap-2 shrink-0 transition-colors ${category === 'q1' ? 'bg-rose-500 text-white border-rose-500' : 'border-gray-200 text-gray-500'}`}><Zap className="w-3 h-3" /><span className="text-xs font-bold">Q1</span></button>
+                <button onMouseDown={(e) => e.preventDefault()} onClick={() => setCategory('q2')} className={`px-3 py-2 rounded-xl border flex items-center gap-2 shrink-0 transition-colors ${category === 'q2' ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-200 text-gray-500'}`}><Calendar className="w-3 h-3" /><span className="text-xs font-bold">Q2</span></button>
+                <button onMouseDown={(e) => e.preventDefault()} onClick={() => setCategory('q3')} className={`px-3 py-2 rounded-xl border flex items-center gap-2 shrink-0 transition-colors ${category === 'q3' ? 'bg-amber-500 text-white border-amber-500' : 'border-gray-200 text-gray-500'}`}><Users className="w-3 h-3" /><span className="text-xs font-bold">Q3</span></button>
+                <button onMouseDown={(e) => e.preventDefault()} onClick={() => setCategory('q4')} className={`px-3 py-2 rounded-xl border flex items-center gap-2 shrink-0 transition-colors ${category === 'q4' ? 'bg-slate-500 text-white border-slate-500' : 'border-gray-200 text-gray-500'}`}><Coffee className="w-3 h-3" /><span className="text-xs font-bold">Q4</span></button>
             </div>
         </div>
     </div>
