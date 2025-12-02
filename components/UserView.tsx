@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTasks } from '../context/TaskContext';
 import { useLanguage } from '../context/LanguageContext';
-import { ShieldAlert, Download, ChevronRight, User, Trash2, Languages, Share, Download as InstallIcon, X, Cloud, LogOut, Smartphone, Lock, RefreshCw, Loader2 } from 'lucide-react';
+import { ShieldAlert, ChevronRight, User, Trash2, Languages, Share, Download as InstallIcon, X, Cloud, LogOut, Smartphone, Lock, RefreshCw, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -124,16 +124,6 @@ export const UserView: React.FC = () => {
 
   // Format Phone for Display (e.g. 13800001234 -> 138****1234)
   const displayPhone = user?.email?.split('@')[0].replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') || 'User';
-
-  const handleExport = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "focus_matrix_data.json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-  };
 
   const handleClearData = () => {
     if (window.confirm(t('user.clear.confirm'))) {
@@ -272,18 +262,6 @@ export const UserView: React.FC = () => {
              <p className="text-[12px] text-gray-500 leading-relaxed pl-[52px]">
                 {t('user.install.desc')}
             </p>
-        </div>
-
-        {/* Export Data */}
-        <div 
-            className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between active:scale-[0.99] transition-transform cursor-pointer group"
-            onClick={handleExport}
-        >
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 rounded-xl"><Download className="w-5 h-5 text-blue-500" /></div>
-                <span className="text-[15px] font-bold text-gray-900">{t('user.export')}</span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
         </div>
 
         {/* Clear Data */}
