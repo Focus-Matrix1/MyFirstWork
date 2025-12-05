@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Inbox, ChevronLeft, Zap, Calendar, Users, Coffee, AlignLeft } from 'lucide-react';
 import { useTasks } from '../context/TaskContext';
@@ -13,6 +14,74 @@ const getDropZone = (x: number, y: number): QuadrantId | null => {
   return zone ? (zone.getAttribute('data-zone-id') as QuadrantId) : null;
 };
 
+// --- Draggable Task Item Component with Long Press Logic ---
+const DraggableTaskItem: React.FC<{
+  task: Task;
+  onDragStart: (task: Task, clientX: number, clientY: number, target: HTMLElement) => void;
+  onClick: (task: Task) => void;
+  onComplete: (id: string) => void;
+}> = ({ task, onDragStart, onClick, onComplete }) => {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startPos = useRef<{ x: number; y: number } | null>(null);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest('.checkbox-area')) return;
+    
+    // Store initial position
+    startPos.current = { x: e.clientX, y: e.clientY };
+    const target = e.currentTarget as HTMLElement;
+
+    // Start Long Press Timer
+    timeoutRef.current = setTimeout(() => {
+        if (navigator.vibrate) navigator.vibrate(50);
+        // Trigger Drag Start
+        onDragStart(task, e.clientX, e.clientY, target);
+    }, 250); // 250ms hold to drag
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    // If we move significantly before the timer fires, cancel the timer (it's a scroll)
+    if (timeoutRef.current && startPos.current) {
+        const dist = Math.hypot(e.clientX - startPos.current.x, e.clientY - startPos.current.y);
+        if (dist > 10) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+    }
+  };
+
+  const handlePointerUp = () => {
+    if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+    }
+    startPos.current = null;
+  };
+
+  return (
+    <div
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onClick={() => onClick(task)}
+      // touch-action: pan-y enables native vertical scrolling, preventing browser from hijacking horizontal moves but allowing vertical
+      className={`flex items-center gap-1.5 p-1.5 bg-white rounded-lg shadow-sm border border-transparent active:scale-[0.98] transition-all touch-pan-y select-none cursor-default active:bg-gray-50`}
+    >
+      <div
+        className="checkbox-area w-5 h-5 flex items-center justify-center cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation();
+          onComplete(task.id);
+        }}
+      >
+          <div className="w-4 h-4 rounded border-[1.5px] border-gray-200 bg-gray-50 flex items-center justify-center shrink-0 hover:border-green-400 hover:bg-green-50 transition-colors pointer-events-none"></div>
+      </div>
+      <span className="text-[12px] text-gray-800 font-medium truncate tracking-tight select-none leading-snug">{task.title}</span>
+    </div>
+  );
+};
+
 const Quadrant: React.FC<{
   id: QuadrantId;
   title: string;
@@ -23,7 +92,7 @@ const Quadrant: React.FC<{
   tasks: Task[];
   highlighted: boolean;
   onComplete: (id: string) => void;
-  onDragStart: (e: React.PointerEvent, task: Task) => void;
+  onDragStart: (task: Task, x: number, y: number, el: HTMLElement) => void;
   onClickTask: (task: Task) => void;
   emptyText: string;
 }> = ({ id, title, subtitle, icon, colorClass, bgClass, tasks, highlighted, onComplete, onDragStart, onClickTask, emptyText }) => {
@@ -34,38 +103,24 @@ const Quadrant: React.FC<{
         highlighted ? 'ring-inset ring-4 ring-white/60 !bg-gray-100/90' : ''
       }`}
     >
-      <div className="px-4 pt-4 pb-2 shrink-0 pointer-events-none select-none">
-        <div className="flex items-start gap-2 mb-0.5">
-          <div className={`${colorClass} mt-0.5`}>{icon}</div>
+      <div className="px-3 pt-3 pb-1 shrink-0 pointer-events-none select-none">
+        <div className="flex items-start gap-1.5 mb-0.5">
+          <div className={`${colorClass} mt-0.5 scale-90`}>{icon}</div>
           <div className="flex flex-col">
-              <h3 className="text-[14px] font-bold leading-tight text-slate-700">{title}</h3>
+              <h3 className="text-[13px] font-bold leading-tight text-slate-700">{title}</h3>
               <span className="text-[10px] font-medium text-slate-500">{subtitle}</span>
           </div>
         </div>
       </div>
-      <div className="flex-1 px-3 pb-3 overflow-y-auto no-scrollbar pointer-events-auto space-y-2">
+      <div className="flex-1 px-2 pb-2 overflow-y-auto no-scrollbar pointer-events-auto space-y-1">
         {tasks.map(task => (
-          <div
-            key={task.id}
-            onPointerDown={(e) => {
-                // Ignore clicks on checkbox
-                if ((e.target as HTMLElement).closest('.checkbox-area')) return;
-                onDragStart(e, task);
-            }}
-            onClick={() => onClickTask(task)}
-            className={`flex items-center gap-1.5 p-2 bg-white rounded-xl shadow-sm border border-transparent active:scale-[0.98] transition-all cursor-grab active:cursor-grabbing hover:shadow-md fade-in group touch-none`}
-          >
-            <div
-              className="checkbox-area w-6 h-6 flex items-center justify-center cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                onComplete(task.id);
-              }}
-            >
-                <div className="w-5 h-5 rounded-md border-[1.5px] border-gray-200 bg-gray-50 flex items-center justify-center shrink-0 hover:border-green-400 hover:bg-green-50 transition-colors group-hover:border-gray-300 pointer-events-none"></div>
-            </div>
-            <span className="text-[13px] text-gray-800 font-medium truncate tracking-tight pt-0.5 select-none">{task.title}</span>
-          </div>
+          <DraggableTaskItem 
+             key={task.id}
+             task={task}
+             onDragStart={onDragStart}
+             onClick={onClickTask}
+             onComplete={onComplete}
+          />
         ))}
         {tasks.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full opacity-40 select-none pointer-events-none px-4">
@@ -99,33 +154,26 @@ export const MatrixView: React.FC = () => {
   }, [inboxShakeTrigger]);
 
   // Drag Logic
-  const handleDragStart = (e: React.PointerEvent, task: Task) => {
-    // Prevent default touch actions like scrolling
-    e.preventDefault();
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
+  const handleDragStart = (task: Task, clientX: number, clientY: number, element: HTMLElement) => {
+    const rect = element.getBoundingClientRect();
+    const offsetX = clientX - rect.left;
+    const offsetY = clientY - rect.top;
 
     setDragItem({
       task,
-      x: e.clientX,
-      y: e.clientY,
+      x: clientX,
+      y: clientY,
       offsetX,
       offsetY,
     });
     
     // Close inbox if open
     setInboxOpen(false);
-    
-    // Vibrations for mobile
-    if (navigator.vibrate) navigator.vibrate(50);
   };
 
   const handlePointerMove = (e: PointerEvent) => {
     if (!dragItem) return;
-    e.preventDefault();
+    e.preventDefault(); // Prevent scrolling while dragging
     
     setDragItem(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null);
 
@@ -139,15 +187,11 @@ export const MatrixView: React.FC = () => {
     const zone = getDropZone(e.clientX, e.clientY);
     
     if (zone) {
-        // If dropping into a zone
         if (zone !== dragItem.task.category) {
             moveTask(dragItem.task.id, zone);
             if (navigator.vibrate) navigator.vibrate(20);
         }
     } else {
-      // If dropped nowhere (and not started from matrix), maybe reopen inbox logic could go here
-      // For now, if dragged from Inbox to nowhere, it stays in Inbox.
-      // If dragged from Q1 to nowhere, it stays in Q1.
       if (dragItem.task.category === 'inbox' && !zone) {
           setInboxOpen(true);
       }
@@ -255,13 +299,11 @@ export const MatrixView: React.FC = () => {
       </div>
 
       {/* Inbox Drawer */}
-      {/* Backdrop */}
       <div 
         className={`absolute inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${isInboxOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setInboxOpen(false)}
       ></div>
       
-      {/* Panel */}
       <div 
         className={`absolute top-0 left-0 bottom-0 w-[85%] max-w-[320px] bg-white z-[70] shadow-2xl transition-transform duration-300 flex flex-col rounded-r-[32px] ${isInboxOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
@@ -284,7 +326,11 @@ export const MatrixView: React.FC = () => {
              inboxTasks.map(task => (
                 <div 
                   key={task.id}
-                  onPointerDown={(e) => handleDragStart(e, task)}
+                  onPointerDown={(e) => {
+                      // Immediate drag from inbox is okay, or we can use the same logic. 
+                      // Let's keep immediate drag for inbox for easier quick sorting.
+                      handleDragStart(task, e.clientX, e.clientY, e.currentTarget as HTMLElement);
+                  }}
                   className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative active:scale-95 transition-transform touch-none select-none cursor-grab active:cursor-grabbing"
                 >
                   <div className="flex items-center gap-3 pointer-events-none">
@@ -311,17 +357,17 @@ export const MatrixView: React.FC = () => {
       {/* Drag Ghost Element */}
       {dragItem && createPortal(
         <div 
-          className="fixed z-[100] pointer-events-none bg-white p-4 rounded-xl shadow-2xl border border-gray-200 opacity-90 w-[240px]"
+          className="fixed z-[100] pointer-events-none bg-white p-3 rounded-lg shadow-2xl border border-gray-200 opacity-90 w-[200px]"
           style={{ 
             left: dragItem.x - dragItem.offsetX, 
             top: dragItem.y - dragItem.offsetY,
             transform: 'scale(1.05) rotate(2deg)',
-            width: '280px' // approximated fixed width for consistency
+            width: '240px' 
           }}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-            <span className="text-sm font-bold text-gray-700">{dragItem.task.title}</span>
+            <span className="text-xs font-bold text-gray-700">{dragItem.task.title}</span>
           </div>
         </div>,
         document.body

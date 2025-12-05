@@ -48,6 +48,15 @@ const translations: Record<Language, Record<string, string>> = {
     'detail.category': 'Category',
     'detail.date': 'Planned Completion Date',
 
+    'habits.title': 'Habits',
+    'habits.add': 'New Habit',
+    'habits.streak': 'Streak',
+    'habits.empty': 'No habits yet. Start small.',
+    'habits.delete_confirm': 'Delete this habit?',
+    'habits.today': 'Today',
+
+    'profile.title': 'Profile',
+    'profile.settings': 'Settings',
     'stats.title': 'Insights',
     'stats.tasks_completed': 'Velocity',
     'stats.avg_speed': 'Avg Speed',
@@ -63,12 +72,14 @@ const translations: Record<Language, Record<string, string>> = {
     'user.tier': 'Free Tier',
     'user.hardcore': 'Hardcore Mode',
     'user.hardcore.desc': 'Disables dragging to sort active tasks. Forces you to clear the list.',
+    'user.ai': 'AI Auto-Classify',
+    'user.ai.desc': 'Automatically sort tasks and estimate duration',
     'user.language': 'Language',
     'user.clear': 'Clear All Data',
     'user.clear.confirm': 'Are you sure you want to clear all tasks? This cannot be undone.',
     'user.install': 'Install App',
     'user.install.desc': 'Add to Home Screen',
-    'user.version': 'Focus Matrix v1.7.25',
+    'user.version': 'Focus Matrix v2.1',
 
     'add.title': 'New Task',
     'add.placeholder': 'What needs to be done?',
@@ -136,7 +147,16 @@ const translations: Record<Language, Record<string, string>> = {
     'detail.category': '所属分类',
     'detail.date': '计划完成日期',
 
-    'stats.title': '洞察',
+    'habits.title': '习惯追踪',
+    'habits.add': '新建习惯',
+    'habits.streak': '连胜',
+    'habits.empty': '暂无习惯，从坚持一件小事开始。',
+    'habits.delete_confirm': '删除这个习惯？',
+    'habits.today': '今日',
+
+    'profile.title': '个人中心',
+    'profile.settings': '设置',
+    'stats.title': '数据概览',
     'stats.tasks_completed': '本周产出',
     'stats.avg_speed': '平均流转',
     'stats.speed.fast': '高效 ⚡️',
@@ -151,12 +171,14 @@ const translations: Record<Language, Record<string, string>> = {
     'user.tier': '免费版',
     'user.hardcore': '硬核模式',
     'user.hardcore.desc': '开启后禁止手动拖拽排序，强制面对现实。',
+    'user.ai': 'AI 自动分类',
+    'user.ai.desc': '根据标题自动归类并预估用时',
     'user.language': '语言设置',
     'user.clear': '清空所有数据',
-    'user.clear.confirm': '确定要清空所有任务吗？此操作无法撤销。',
+    'user.clear.confirm': '确定要清空所有任务和习惯吗？此操作无法撤销。',
     'user.install': '安装应用',
     'user.install.desc': '添加到主屏幕以获得最佳体验',
-    'user.version': 'Focus Matrix v1.7.25',
+    'user.version': 'Focus Matrix v2.1',
 
     'add.title': '新任务',
     'add.placeholder': '准备做点什么？',
@@ -172,7 +194,7 @@ const translations: Record<Language, Record<string, string>> = {
     'install.button.close': '知道了',
 
     'cloud.title': '云端备份',
-    'cloud.desc': '登录后在多设备间同步任务数据',
+    'cloud.desc': '登录后在多设备间同步数据',
     'cloud.sync': '同步数据',
     'cloud.syncing': '同步中...',
     'cloud.restore_success': '云端数据已恢复！',
@@ -193,11 +215,11 @@ const translations: Record<Language, Record<string, string>> = {
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>(() => {
     try {
-      if (typeof window === 'undefined') return 'en';
+      if (typeof window === 'undefined') return 'zh';
       const saved = localStorage.getItem('focus-matrix-lang');
-      return (saved === 'zh' || saved === 'en') ? saved : 'en';
+      return (saved === 'zh' || saved === 'en') ? saved : 'zh';
     } catch {
-      return 'en';
+      return 'zh';
     }
   });
 

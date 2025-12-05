@@ -14,7 +14,18 @@ export interface Task {
   duration?: string; // e.g. "30m", "1h"
 }
 
-export type ViewState = 'matrix' | 'list' | 'stats' | 'user';
+export interface Habit {
+  id: string;
+  title: string;
+  color: string;
+  icon: string;
+  createdAt: number;
+  completedDates: string[]; // Array of YYYY-MM-DD strings
+  streak: number;
+  frequency: string; // e.g., "1d", "12h"
+}
+
+export type ViewState = 'matrix' | 'list' | 'habits' | 'profile';
 
 export interface DragItem {
   task: Task;

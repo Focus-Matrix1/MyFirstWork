@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
-import { Task, CategoryId } from '../types';
+import { Task, CategoryId, Habit } from '../types';
+import { GoogleGenAI } from "@google/genai";
 
 interface TaskContextType {
   tasks: Task[];
@@ -10,14 +11,23 @@ interface TaskContextType {
   completeTask: (taskId: string) => void;
   deleteTask: (taskId: string) => void;
   getTasksByCategory: (category: CategoryId) => Task[];
+  
+  habits: Habit[];
+  addHabit: (title: string, color: string, frequency: string) => void;
+  toggleHabit: (habitId: string, date: string) => void;
+  deleteHabit: (habitId: string) => void;
+
   hardcoreMode: boolean;
   toggleHardcoreMode: () => void;
   clearAllTasks: () => void;
-  restoreTasks: (tasks: Task[]) => void;
+  restoreTasks: (data: { tasks: Task[], habits: Habit[] }) => void;
   selectedDate: string;
   setSelectedDate: (date: string) => void;
   inboxShakeTrigger: number;
-  addSuccessTrigger: number; // Signal for FAB animation
+  addSuccessTrigger: number;
+  
+  aiMode: boolean;
+  setAiMode: (enabled: boolean) => void;
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -37,7 +47,11 @@ const INITIAL_TASKS: Task[] = [
   { id: '3', title: '健身 30 分钟', category: 'q2', createdAt: Date.now(), completed: false, duration: '30m' },
   { id: '4', title: '整理发票报销', category: 'inbox', createdAt: Date.now(), completed: false },
   { id: '5', title: 'Review design assets', category: 'inbox', createdAt: Date.now(), completed: false },
-  { id: '6', title: 'Email catch-up', category: 'inbox', createdAt: Date.now(), completed: false },
+];
+
+const INITIAL_HABITS: Habit[] = [
+    { id: 'h1', title: '早起阅读', color: 'bg-indigo-500', icon: 'Book', createdAt: Date.now(), completedDates: [], streak: 0, frequency: '1d' },
+    { id: 'h2', title: '喝八杯水', color: 'bg-blue-400', icon: 'Droplet', createdAt: Date.now(), completedDates: [], streak: 0, frequency: '1d' },
 ];
 
 export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -55,6 +69,19 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return INITIAL_TASKS;
     }
   });
+
+  const [habits, setHabits] = useState<Habit[]>(() => {
+      try {
+          if (typeof window === 'undefined') return INITIAL_HABITS;
+          const saved = localStorage.getItem('focus-matrix-habits');
+          if (saved) {
+              return JSON.parse(saved);
+          }
+          return INITIAL_HABITS;
+      } catch {
+          return INITIAL_HABITS;
+      }
+  });
   
   const [hardcoreMode, setHardcoreMode] = useState<boolean>(() => {
     try {
@@ -65,6 +92,13 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   });
 
+  const [aiMode, setAiMode] = useState<boolean>(() => {
+      try {
+          if (typeof window === 'undefined') return false;
+          return localStorage.getItem('focus-matrix-ai') === 'true';
+      } catch { return false; }
+  });
+
   const [selectedDate, setSelectedDate] = useState<string>(getTodayString());
   const [inboxShakeTrigger, setInboxShakeTrigger] = useState(0);
   const [addSuccessTrigger, setAddSuccessTrigger] = useState(0);
@@ -72,7 +106,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Audio Context for "Ding" sound
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  const playSuccessSound = () => {
+  const playSuccessSound = (pitch = 800) => {
     try {
         if (!audioCtxRef.current) {
             audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -86,8 +120,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const gainNode = ctx.createGain();
 
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(800, ctx.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(pitch, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(pitch + 400, ctx.currentTime + 0.1);
         
         gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
@@ -112,15 +146,64 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     try {
+        localStorage.setItem('focus-matrix-habits', JSON.stringify(habits));
+    } catch (error) {
+        console.warn('Failed to save habits:', error);
+    }
+  }, [habits]);
+
+  useEffect(() => {
+    try {
       localStorage.setItem('focus-matrix-hardcore', String(hardcoreMode));
+      localStorage.setItem('focus-matrix-ai', String(aiMode));
     } catch (error) {
       console.warn('Failed to save settings:', error);
     }
-  }, [hardcoreMode]);
+  }, [hardcoreMode, aiMode]);
 
-  const addTask = (title: string, category: CategoryId = 'inbox', date?: string, description?: string, duration?: string) => {
+  // --- AI Classification ---
+  const classifyTaskWithAI = async (title: string, description?: string): Promise<{ category: CategoryId, duration?: string }> => {
+      if (!process.env.API_KEY) return { category: 'q1' }; // Fallback
+
+      try {
+          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+          // System instruction to guide the model
+          const prompt = `Classify this task into Eisenhower Matrix quadrants (q1: Urgent & Important, q2: Important Not Urgent, q3: Urgent Not Important, q4: Not Urgent Not Important) and estimate duration (e.g. 30m, 1h, 2h).
+          Task: "${title}"
+          Details: "${description || ''}"
+          Return ONLY valid JSON: { "category": "q1"|"q2"|"q3"|"q4", "duration": "string" }`;
+          
+          const response = await ai.models.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: prompt,
+              config: {
+                responseMimeType: "application/json"
+              }
+          });
+          
+          const text = response.text;
+          if (!text) return { category: 'inbox' };
+          
+          const result = JSON.parse(text);
+          return {
+              category: (['q1','q2','q3','q4'].includes(result.category) ? result.category : 'inbox') as CategoryId,
+              duration: result.duration
+          };
+
+      } catch (e) {
+          console.error("AI Classification failed", e);
+          return { category: 'inbox' };
+      }
+  };
+
+  // --- Task Actions ---
+
+  const addTask = async (title: string, category: CategoryId = 'inbox', date?: string, description?: string, duration?: string) => {
+    const tempId = Math.random().toString(36).substr(2, 9);
+    
+    // Immediate optimistic update
     const newTask: Task = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: tempId,
       title,
       description,
       category,
@@ -129,13 +212,27 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       plannedDate: date,
       duration
     };
-    setTasks(prev => [newTask, ...prev]);
     
-    // Trigger animations
-    if (category === 'inbox') {
-        setInboxShakeTrigger(prev => prev + 1);
-    }
+    setTasks(prev => [newTask, ...prev]);
+    if (category === 'inbox') setInboxShakeTrigger(prev => prev + 1);
     setAddSuccessTrigger(prev => prev + 1);
+
+    // AI Classification Background Process
+    // Trigger if AI mode is ON, and user hasn't explicitly categorized it (defaults to inbox)
+    if (aiMode && category === 'inbox') {
+        try {
+            const aiResult = await classifyTaskWithAI(title, description);
+            if (aiResult.category !== 'inbox') {
+                updateTask(tempId, { 
+                    category: aiResult.category,
+                    duration: duration || aiResult.duration // keep user duration if provided, else use AI
+                });
+                if (navigator.vibrate) navigator.vibrate(20); // subtle feedback when AI sorts it
+            }
+        } catch (e) {
+            console.warn("AI Auto-sort failed silently", e);
+        }
+    }
   };
 
   const updateTask = (taskId: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => {
@@ -151,15 +248,12 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (t.id !== taskId) return t;
         const isNowCompleted = !t.completed;
         
-        // Haptic Feedback & Sound Logic on Completion
         if (isNowCompleted) {
              playSuccessSound();
              if (navigator.vibrate) {
                  if (t.category === 'q1' || t.category === 'q2') {
-                     // Heavy impact
                      navigator.vibrate([40, 30, 40]); 
                  } else {
-                     // Light tap
                      navigator.vibrate(20);
                  }
              }
@@ -176,13 +270,78 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const deleteTask = (taskId: string) => {
     setTasks(prev => prev.filter(t => t.id !== taskId));
   };
-  
-  const clearAllTasks = () => {
-    setTasks([]);
+
+  // --- Habit Actions ---
+
+  const addHabit = (title: string, color: string, frequency: string) => {
+      const newHabit: Habit = {
+          id: Math.random().toString(36).substr(2, 9),
+          title,
+          color,
+          icon: 'Check',
+          createdAt: Date.now(),
+          completedDates: [],
+          streak: 0,
+          frequency
+      };
+      setHabits(prev => [...prev, newHabit]);
+      setAddSuccessTrigger(prev => prev + 1);
   };
 
-  const restoreTasks = (newTasks: Task[]) => {
-      setTasks(newTasks);
+  const toggleHabit = (habitId: string, date: string) => {
+      setHabits(prev => prev.map(h => {
+          if (h.id !== habitId) return h;
+          
+          const hasCompleted = h.completedDates.includes(date);
+          let newDates: string[];
+          if (hasCompleted) {
+              newDates = h.completedDates.filter(d => d !== date);
+          } else {
+              newDates = [...h.completedDates, date].sort();
+              playSuccessSound(1000); // Higher pitch for habits
+              if (navigator.vibrate) navigator.vibrate(30);
+          }
+
+          // Simple streak calculation (consecutive days ending yesterday or today)
+          let currentStreak = 0;
+          const today = new Date();
+          const todayStr = getTodayString();
+          const checkDate = new Date(todayStr); // Start from today or yesterday
+          
+          // Check if today is completed
+          if (newDates.includes(todayStr)) {
+              currentStreak = 1;
+          }
+          
+          // Go back in time
+          while(true) {
+             checkDate.setDate(checkDate.getDate() - 1);
+             const dateStr = checkDate.toISOString().split('T')[0];
+             if (newDates.includes(dateStr)) {
+                 currentStreak++;
+             } else {
+                 break;
+             }
+          }
+
+          return { ...h, completedDates: newDates, streak: currentStreak };
+      }));
+  };
+
+  const deleteHabit = (habitId: string) => {
+      setHabits(prev => prev.filter(h => h.id !== habitId));
+  };
+  
+  // --- Global Actions ---
+
+  const clearAllTasks = () => {
+    setTasks([]);
+    setHabits([]);
+  };
+
+  const restoreTasks = (data: { tasks: Task[], habits: Habit[] }) => {
+      if (data.tasks) setTasks(data.tasks);
+      if (data.habits) setHabits(data.habits);
   };
 
   const getTasksByCategory = (category: CategoryId) => {
@@ -200,6 +359,12 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       completeTask, 
       deleteTask, 
       getTasksByCategory,
+      
+      habits,
+      addHabit,
+      toggleHabit,
+      deleteHabit,
+
       hardcoreMode,
       toggleHardcoreMode,
       clearAllTasks,
@@ -207,7 +372,10 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       selectedDate,
       setSelectedDate,
       inboxShakeTrigger,
-      addSuccessTrigger
+      addSuccessTrigger,
+
+      aiMode,
+      setAiMode
     }}>
       {children}
     </TaskContext.Provider>

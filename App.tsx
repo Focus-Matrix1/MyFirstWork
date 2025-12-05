@@ -1,13 +1,13 @@
-import React, { useState, useEffect, ReactNode, ErrorInfo } from 'react';
+import React, { useState, useEffect, ReactNode, ErrorInfo, Component } from 'react';
 import { TaskProvider, useTasks } from './context/TaskContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { MatrixView } from './components/MatrixView';
 import { ListView } from './components/ListView';
-import { StatsView } from './components/StatsView';
-import { UserView } from './components/UserView';
-import { AddModal } from './components/AddModal';
-import { LayoutGrid, ListTodo, BarChart2, User, Plus, Check, AlertTriangle } from 'lucide-react';
+import { HabitView } from './components/StatsView';
+import { ProfileView } from './components/UserView';
+import { LayoutGrid, ListTodo, User, Plus, Check, AlertTriangle, Repeat } from 'lucide-react';
 import { ViewState } from './types';
+import { AddModal } from './components/AddModal';
 
 // --- Error Boundary Component ---
 interface ErrorBoundaryProps {
@@ -19,7 +19,7 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = {
     hasError: false,
     error: null
@@ -73,6 +73,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 }
 
 // --- Main App Content ---
+
 const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('matrix');
   const [isAddModalOpen, setAddModalOpen] = useState(false);
@@ -108,11 +109,11 @@ const AppContent: React.FC = () => {
             <div className={`w-full h-full transition-opacity duration-300 ${currentView === 'list' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
                 <ListView />
             </div>
-             <div className={`w-full h-full transition-opacity duration-300 ${currentView === 'stats' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
-                <StatsView />
+             <div className={`w-full h-full transition-opacity duration-300 ${currentView === 'habits' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
+                <HabitView />
             </div>
-            <div className={`w-full h-full transition-opacity duration-300 ${currentView === 'user' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
-                <UserView />
+            <div className={`w-full h-full transition-opacity duration-300 ${currentView === 'profile' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
+                <ProfileView />
             </div>
         </div>
 
@@ -139,8 +140,8 @@ const AppContent: React.FC = () => {
                 </div>
             </button>
 
-            <NavButton view="stats" icon={BarChart2} />
-            <NavButton view="user" icon={User} />
+            <NavButton view="habits" icon={Repeat} />
+            <NavButton view="profile" icon={User} />
         </div>
 
         <AddModal isOpen={isAddModalOpen} onClose={() => setAddModalOpen(false)} />
