@@ -8,6 +8,7 @@ interface TaskContextType {
   addTask: (title: string, category?: CategoryId, date?: string, description?: string, duration?: string) => void;
   updateTask: (taskId: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => void;
   moveTask: (taskId: string, targetCategory: CategoryId) => void;
+  reorderTask: (taskId: string, newCategory: CategoryId, newIndex: number) => void;
   completeTask: (taskId: string) => void;
   deleteTask: (taskId: string) => void;
   getTasksByCategory: (category: CategoryId) => Task[];
@@ -243,6 +244,49 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, category: targetCategory } : t));
   };
 
+  const reorderTask = (taskId: string, newCategory: CategoryId, newIndex: number) => {
+    setTasks(prev => {
+      // Find the task
+      const task = prev.find(t => t.id === taskId);
+      if (!task) return prev;
+
+      // Filter out the task from the list
+      const filtered = prev.filter(t => t.id !== taskId);
+
+      // Get tasks in the target category (to find insertion point)
+      // We assume matrix view shows active tasks, so we filter by category and active status to determine visual order
+      const categoryTasks = filtered.filter(t => t.category === newCategory && !t.completed);
+
+      // We want to insert 'task' into 'filtered' such that it ends up at 'newIndex' among 'categoryTasks'
+      const taskAtIndex = categoryTasks[newIndex];
+      const updatedTask = { ...task, category: newCategory };
+      
+      const newTasks = [...filtered];
+      
+      if (taskAtIndex) {
+          // Insert before the task that is currently at the target index
+          const indexInAll = newTasks.findIndex(t => t.id === taskAtIndex.id);
+          if (indexInAll !== -1) {
+              newTasks.splice(indexInAll, 0, updatedTask);
+          } else {
+             newTasks.push(updatedTask);
+          }
+      } else {
+          // Insert after the last visible task of this category, or at end if none
+          if (categoryTasks.length > 0) {
+              const lastTask = categoryTasks[categoryTasks.length - 1];
+              const indexInAll = newTasks.findIndex(t => t.id === lastTask.id);
+              // Insert after
+              newTasks.splice(indexInAll + 1, 0, updatedTask);
+          } else {
+              newTasks.push(updatedTask);
+          }
+      }
+      
+      return newTasks;
+    });
+  };
+
   const completeTask = (taskId: string) => {
     setTasks(prev => prev.map(t => {
         if (t.id !== taskId) return t;
@@ -355,7 +399,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       tasks, 
       addTask, 
       updateTask,
-      moveTask, 
+      moveTask,
+      reorderTask,
       completeTask, 
       deleteTask, 
       getTasksByCategory,

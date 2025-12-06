@@ -20,7 +20,8 @@ const DraggableTaskItem: React.FC<{
   onDragStart: (task: Task, clientX: number, clientY: number, target: HTMLElement) => void;
   onClick: (task: Task) => void;
   onComplete: (id: string) => void;
-}> = ({ task, onDragStart, onClick, onComplete }) => {
+  isDragging?: boolean;
+}> = ({ task, onDragStart, onClick, onComplete, isDragging }) => {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startPos = useRef<{ x: number; y: number } | null>(null);
 
@@ -65,8 +66,9 @@ const DraggableTaskItem: React.FC<{
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
       onClick={() => onClick(task)}
+      data-task-id={task.id}
       // touch-action: pan-y enables native vertical scrolling, preventing browser from hijacking horizontal moves but allowing vertical
-      className={`flex items-center gap-1.5 p-1.5 bg-white rounded-lg shadow-sm border border-transparent active:scale-[0.98] transition-all touch-pan-y select-none cursor-default active:bg-gray-50`}
+      className={`flex items-center gap-1.5 p-1.5 bg-white rounded-lg shadow-sm border border-transparent active:scale-[0.98] transition-all touch-pan-y select-none cursor-default active:bg-gray-50 ${isDragging ? 'opacity-30' : ''}`}
     >
       <div
         className="checkbox-area w-5 h-5 flex items-center justify-center cursor-pointer"
@@ -95,7 +97,9 @@ const Quadrant: React.FC<{
   onDragStart: (task: Task, x: number, y: number, el: HTMLElement) => void;
   onClickTask: (task: Task) => void;
   emptyText: string;
-}> = ({ id, title, subtitle, icon, colorClass, bgClass, tasks, highlighted, onComplete, onDragStart, onClickTask, emptyText }) => {
+  dropTarget: { zone: QuadrantId; index: number } | null;
+  draggedTaskId?: string;
+}> = ({ id, title, subtitle, icon, colorClass, bgClass, tasks, highlighted, onComplete, onDragStart, onClickTask, emptyText, dropTarget, draggedTaskId }) => {
   return (
     <div
       data-zone-id={id}
@@ -112,16 +116,29 @@ const Quadrant: React.FC<{
           </div>
         </div>
       </div>
-      <div className="flex-1 px-2 pb-2 overflow-y-auto no-scrollbar pointer-events-auto space-y-1">
-        {tasks.map(task => (
-          <DraggableTaskItem 
-             key={task.id}
-             task={task}
-             onDragStart={onDragStart}
-             onClick={onClickTask}
-             onComplete={onComplete}
-          />
+      <div className="flex-1 px-2 pb-2 overflow-y-auto no-scrollbar pointer-events-auto space-y-1 task-list-container">
+        {tasks.map((task, i) => (
+          <React.Fragment key={task.id}>
+             {/* Drop placeholder before item */}
+             {dropTarget?.zone === id && dropTarget.index === i && (
+                 <div className="h-0.5 w-full bg-blue-500 rounded-full my-1 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
+             )}
+             
+             <DraggableTaskItem 
+                task={task}
+                onDragStart={onDragStart}
+                onClick={onClickTask}
+                onComplete={onComplete}
+                isDragging={draggedTaskId === task.id}
+             />
+          </React.Fragment>
         ))}
+        
+        {/* Drop placeholder at the end of the list */}
+        {dropTarget?.zone === id && dropTarget.index === tasks.length && (
+            <div className="h-0.5 w-full bg-blue-500 rounded-full my-1 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
+        )}
+
         {tasks.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full opacity-40 select-none pointer-events-none px-4">
              <span className="text-[10px] font-bold tracking-wider uppercase text-center leading-relaxed text-slate-400">{emptyText}</span>
@@ -133,11 +150,11 @@ const Quadrant: React.FC<{
 };
 
 export const MatrixView: React.FC = () => {
-  const { tasks, getTasksByCategory, moveTask, completeTask, hardcoreMode, inboxShakeTrigger, updateTask, deleteTask } = useTasks();
+  const { tasks, getTasksByCategory, moveTask, completeTask, hardcoreMode, inboxShakeTrigger, updateTask, deleteTask, reorderTask } = useTasks();
   const { t, language } = useLanguage();
   const [isInboxOpen, setInboxOpen] = useState(false);
   const [dragItem, setDragItem] = useState<{ task: Task; x: number; y: number; offsetX: number; offsetY: number } | null>(null);
-  const [highlightedZone, setHighlightedZone] = useState<QuadrantId | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ zone: QuadrantId; index: number } | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isInboxShaking, setInboxShaking] = useState(false);
   
@@ -178,27 +195,56 @@ export const MatrixView: React.FC = () => {
     setDragItem(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null);
 
     const zone = getDropZone(e.clientX, e.clientY);
-    setHighlightedZone(zone);
+    
+    if (zone) {
+        // Calculate the specific insertion index within the zone
+        // Find the scroll container for this zone
+        const zoneContent = document.querySelector(`[data-zone-id="${zone}"] .task-list-container`);
+        if (zoneContent) {
+            // Get all task items in this zone
+            // We use data-task-id to strictly select task elements
+            const items = Array.from(zoneContent.children).filter(el => el.hasAttribute('data-task-id'));
+            
+            let index = items.length; // Default to end
+
+            // Find insertion point
+            for (let i = 0; i < items.length; i++) {
+                const rect = items[i].getBoundingClientRect();
+                const centerY = rect.top + rect.height / 2;
+                if (e.clientY < centerY) {
+                    index = i;
+                    break;
+                }
+            }
+            setDropTarget({ zone, index });
+        } else {
+            // Should not happen, but safe fallback
+            setDropTarget({ zone, index: 0 });
+        }
+    } else {
+        setDropTarget(null);
+    }
   };
 
   const handlePointerUp = (e: PointerEvent) => {
     if (!dragItem) return;
     
-    const zone = getDropZone(e.clientX, e.clientY);
-    
-    if (zone) {
-        if (zone !== dragItem.task.category) {
-            moveTask(dragItem.task.id, zone);
+    if (dropTarget) {
+        if (dropTarget.zone !== dragItem.task.category || dropTarget.index !== -1) { // -1 check is redundant but safe
+            reorderTask(dragItem.task.id, dropTarget.zone, dropTarget.index);
             if (navigator.vibrate) navigator.vibrate(20);
         }
     } else {
+      // Logic to reopen inbox if dropped back near it (optional, handled below implicitly by not changing anything)
+      // Check if dropped near inbox or "nowhere" and it was from inbox?
+      const zone = getDropZone(e.clientX, e.clientY);
       if (dragItem.task.category === 'inbox' && !zone) {
           setInboxOpen(true);
       }
     }
 
     setDragItem(null);
-    setHighlightedZone(null);
+    setDropTarget(null);
   };
 
   useEffect(() => {
@@ -248,11 +294,13 @@ export const MatrixView: React.FC = () => {
           colorClass="text-rose-500" 
           bgClass="bg-[#FFF5F5]" 
           tasks={getTasksByCategory('q1')} 
-          highlighted={highlightedZone === 'q1'}
+          highlighted={dropTarget?.zone === 'q1'}
           onComplete={completeTask}
           onDragStart={handleDragStart}
           onClickTask={setEditingTask}
           emptyText={t('matrix.empty')}
+          dropTarget={dropTarget}
+          draggedTaskId={dragItem?.task.id}
         />
         <Quadrant 
           id="q2" 
@@ -262,11 +310,13 @@ export const MatrixView: React.FC = () => {
           colorClass="text-blue-600" 
           bgClass="bg-blue-50" 
           tasks={getTasksByCategory('q2')} 
-          highlighted={highlightedZone === 'q2'}
+          highlighted={dropTarget?.zone === 'q2'}
           onComplete={completeTask}
           onDragStart={handleDragStart}
           onClickTask={setEditingTask}
           emptyText={t('matrix.q2.empty')}
+          dropTarget={dropTarget}
+          draggedTaskId={dragItem?.task.id}
         />
         <Quadrant 
           id="q3" 
@@ -276,11 +326,13 @@ export const MatrixView: React.FC = () => {
           colorClass="text-amber-600" 
           bgClass="bg-[#FFFAEB]" 
           tasks={getTasksByCategory('q3')} 
-          highlighted={highlightedZone === 'q3'}
+          highlighted={dropTarget?.zone === 'q3'}
           onComplete={completeTask}
           onDragStart={handleDragStart}
           onClickTask={setEditingTask}
           emptyText={t('matrix.empty')}
+          dropTarget={dropTarget}
+          draggedTaskId={dragItem?.task.id}
         />
         <Quadrant 
           id="q4" 
@@ -290,11 +342,13 @@ export const MatrixView: React.FC = () => {
           colorClass="text-slate-500" 
           bgClass="bg-slate-50" 
           tasks={getTasksByCategory('q4')} 
-          highlighted={highlightedZone === 'q4'}
+          highlighted={dropTarget?.zone === 'q4'}
           onComplete={completeTask}
           onDragStart={handleDragStart}
           onClickTask={setEditingTask}
           emptyText={t('matrix.empty')}
+          dropTarget={dropTarget}
+          draggedTaskId={dragItem?.task.id}
         />
       </div>
 
