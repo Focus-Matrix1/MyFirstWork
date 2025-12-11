@@ -47,6 +47,7 @@ const translations: Record<Language, Record<string, string>> = {
     'detail.created': 'Created',
     'detail.category': 'Category',
     'detail.date': 'Planned Completion Date',
+    'detail.hardcore_locked': 'Hardcore Mode: Editing Disabled',
 
     'habits.title': 'Habits',
     'habits.add': 'New Habit',
@@ -71,7 +72,7 @@ const translations: Record<Language, Record<string, string>> = {
     'user.guest': 'Guest User',
     'user.tier': 'Free Tier',
     'user.hardcore': 'Hardcore Mode',
-    'user.hardcore.desc': 'Disables dragging to sort active tasks. Forces you to clear the list.',
+    'user.hardcore.desc': 'Once created, tasks cannot be edited. Only complete or delete.',
     'user.ai': 'AI Auto-Classify',
     'user.ai.desc': 'Automatically sort tasks and estimate duration',
     'user.language': 'Language',
@@ -146,6 +147,7 @@ const translations: Record<Language, Record<string, string>> = {
     'detail.created': '创建时间',
     'detail.category': '所属分类',
     'detail.date': '计划完成日期',
+    'detail.hardcore_locked': '硬核模式：禁止编辑',
 
     'habits.title': '习惯追踪',
     'habits.add': '新建习惯',
@@ -170,7 +172,7 @@ const translations: Record<Language, Record<string, string>> = {
     'user.guest': '访客用户',
     'user.tier': '免费版',
     'user.hardcore': '硬核模式',
-    'user.hardcore.desc': '开启后禁止手动拖拽排序，强制面对现实。',
+    'user.hardcore.desc': '开启后任务一旦创建不可修改，只能完成或删除。',
     'user.ai': 'AI 自动分类',
     'user.ai.desc': '根据标题自动归类并预估用时',
     'user.language': '语言设置',

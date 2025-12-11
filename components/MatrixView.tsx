@@ -112,7 +112,7 @@ const Quadrant: React.FC<{
           <div className={`${colorClass} mt-0.5 scale-90 shrink-0`}>{icon}</div>
           <div className="flex flex-col min-w-0">
               <h3 className="text-[13px] font-bold leading-tight text-slate-700 truncate">{title}</h3>
-              <span className="text-[10px] font-medium text-slate-500 truncate">{subtitle}</span>
+              <span className="text-[10px] font-medium text-slate-500 truncate min-w-0">{subtitle}</span>
           </div>
         </div>
       </div>
@@ -172,6 +172,23 @@ export const MatrixView: React.FC = () => {
 
   // Drag Logic
   const handleDragStart = (task: Task, clientX: number, clientY: number, element: HTMLElement) => {
+    // HARDCORE MODE RESTRICTION
+    // If Hardcore Mode is ON, users cannot drag/sort tasks that are already in quadrants.
+    // They can only drag tasks FROM the Inbox.
+    if (hardcoreMode && task.category !== 'inbox') {
+        if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+        // Trigger visual feedback (Shake)
+        element.classList.remove('animate-shake');
+        void element.offsetWidth; // Force reflow
+        element.classList.add('animate-shake');
+        
+        // Remove class after animation
+        setTimeout(() => {
+            element.classList.remove('animate-shake');
+        }, 500);
+        return;
+    }
+
     const rect = element.getBoundingClientRect();
     const offsetX = clientX - rect.left;
     const offsetY = clientY - rect.top;

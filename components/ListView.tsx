@@ -16,7 +16,8 @@ const SwipeableTask: React.FC<{
   onComplete: (id: string) => void;
   onClick: (task: Task) => void;
   t: (key: string) => string;
-}> = ({ task, onCategorize, onDelete, onComplete, onClick, t }) => {
+  hardcoreMode: boolean;
+}> = ({ task, onCategorize, onDelete, onComplete, onClick, t, hardcoreMode }) => {
   const [offset, setOffset] = useState(0);
   
   const startX = useRef(0);
@@ -29,6 +30,9 @@ const SwipeableTask: React.FC<{
   const ACTION_WIDTH = 80; // Width of the action buttons
 
   const isInbox = task.category === 'inbox';
+  
+  // Hardcore Mode Lock: Block swipe if enabled and task is categorized
+  const isLocked = hardcoreMode && !isInbox;
 
   const categoryConfig = {
       q1: { bg: 'bg-rose-500', border: 'border-rose-100', text: 'text-rose-700', badgeBg: 'bg-rose-100', checkboxBorder: 'border-rose-200', checkboxBg: 'bg-rose-50', checkColor: 'text-rose-500' },
@@ -53,6 +57,8 @@ const SwipeableTask: React.FC<{
     // We handle logic in content click. But drag start:
     if ((e.target as HTMLElement).closest('.checkbox-area')) return;
     
+    if (isLocked) return;
+
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
     isDragging.current = true;
     directionLock.current = null;
@@ -242,7 +248,7 @@ const SwipeableTask: React.FC<{
 };
 
 export const ListView: React.FC = () => {
-  const { tasks, completeTask, deleteTask, selectedDate, updateTask, moveTask } = useTasks();
+  const { tasks, completeTask, deleteTask, selectedDate, updateTask, moveTask, hardcoreMode } = useTasks();
   const { t } = useLanguage();
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [categorizingTask, setCategorizingTask] = useState<Task | null>(null);
@@ -310,7 +316,15 @@ export const ListView: React.FC = () => {
                 </div>
                  {sortedBacklog.map(task => (
                      <div key={task.id} className="relative h-[52px] mb-1 mx-1">
-                        <SwipeableTask task={task} onCategorize={handleCategorize} onDelete={deleteTask} onComplete={completeTask} onClick={setEditingTask} t={t} />
+                        <SwipeableTask 
+                          task={task} 
+                          onCategorize={handleCategorize} 
+                          onDelete={deleteTask} 
+                          onComplete={completeTask} 
+                          onClick={setEditingTask} 
+                          t={t} 
+                          hardcoreMode={hardcoreMode}
+                        />
                      </div>
                 ))}
             </div>
@@ -321,7 +335,15 @@ export const ListView: React.FC = () => {
             <div className="mb-6 animate-fade-in space-y-3">
                 {sortedPlanned.map(task => (
                     <div key={task.id} className="relative h-[84px] mb-3">
-                        <SwipeableTask task={task} onCategorize={handleCategorize} onDelete={deleteTask} onComplete={completeTask} onClick={setEditingTask} t={t} />
+                        <SwipeableTask 
+                          task={task} 
+                          onCategorize={handleCategorize} 
+                          onDelete={deleteTask} 
+                          onComplete={completeTask} 
+                          onClick={setEditingTask} 
+                          t={t} 
+                          hardcoreMode={hardcoreMode}
+                        />
                     </div>
                 ))}
             </div>
