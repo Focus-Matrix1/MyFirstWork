@@ -255,25 +255,37 @@ export const ListView: React.FC = () => {
   const [showInboxZeroAnim, setShowInboxZeroAnim] = useState(false);
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
 
+  // Get Today's Date String for comparison
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  
+  // Logic: Show undated tasks if we are viewing Today or Future
+  const showUndatedTasks = selectedDate >= todayStr;
+
   const tasksForDate = tasks.filter(task => !task.completed && task.plannedDate === selectedDate);
-  const backlogTasks = tasks.filter(task => !task.completed && task.category === 'inbox' && !task.plannedDate);
+  const undatedTasks = showUndatedTasks 
+    ? tasks.filter(task => !task.completed && !task.plannedDate)
+    : [];
+    
   const completedTasks = tasks.filter(task => task.completed && task.plannedDate === selectedDate);
 
   // --- Inbox Zero Logic ---
-  const prevBacklogCount = useRef(backlogTasks.length);
+  const prevBacklogCount = useRef(undatedTasks.length);
 
   useEffect(() => {
     // Check if backlog dropped to 0 from a positive number
-    if (prevBacklogCount.current > 0 && backlogTasks.length === 0) {
+    if (prevBacklogCount.current > 0 && undatedTasks.length === 0) {
         setShowInboxZeroAnim(true);
         const timer = setTimeout(() => setShowInboxZeroAnim(false), 2500); // Show celebration for 2.5s
         return () => clearTimeout(timer);
     }
-    prevBacklogCount.current = backlogTasks.length;
-  }, [backlogTasks.length]);
+    prevBacklogCount.current = undatedTasks.length;
+  }, [undatedTasks.length]);
   // ------------------------
 
   const sortTasks = (taskList: Task[]) => {
+      // Sort Order: Inbox -> Q1 -> Q2 -> Q3 -> Q4
+      // This ensures Inbox items are at the top of the backlog list
       const priorityOrder: Record<CategoryId, number> = { 'inbox': 0, 'q1': 1, 'q2': 2, 'q3': 3, 'q4': 4 };
       return [...taskList].sort((a, b) => {
           const pDiff = priorityOrder[a.category] - priorityOrder[b.category];
@@ -283,7 +295,7 @@ export const ListView: React.FC = () => {
   };
 
   const sortedPlanned = sortTasks(tasksForDate);
-  const sortedBacklog = sortTasks(backlogTasks);
+  const sortedBacklog = sortTasks(undatedTasks);
 
   const handleCategorize = (task: Task) => {
       setCategorizingTask(task);
@@ -304,7 +316,7 @@ export const ListView: React.FC = () => {
             </div>
         )}
 
-        {/* Inbox / Backlog Section */}
+        {/* Inbox / Backlog / Undated Section */}
         {sortedBacklog.length > 0 && (
             <div className="bg-gray-50/80 rounded-2xl p-1 border border-dashed border-gray-300 mb-6 transition-all duration-300">
                  <div className="px-3 py-2 flex justify-between items-center">
@@ -333,6 +345,10 @@ export const ListView: React.FC = () => {
         {/* Planned Tasks Section */}
         {sortedPlanned.length > 0 && (
             <div className="mb-6 animate-fade-in space-y-3">
+                <div className="px-3 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-black"></div>
+                    <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">{t('list.section.planned')}</span>
+                </div>
                 {sortedPlanned.map(task => (
                     <div key={task.id} className="relative h-[84px] mb-3">
                         <SwipeableTask 
