@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { Task, CategoryId, Habit } from '../types';
 import { GoogleGenAI } from "@google/genai";
@@ -164,32 +163,58 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // --- AI Classification ---
   const classifyTaskWithAI = async (title: string, description?: string): Promise<{ category: CategoryId, duration?: string }> => {
-      if (!process.env.API_KEY) return { category: 'q1' }; // Fallback
+      if (!process.env.API_KEY) {
+          console.warn("AI Mode: No API Key provided");
+          return { category: 'inbox' }; 
+      }
 
       try {
           const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-          // System instruction to guide the model
-          const prompt = `Classify this task into Eisenhower Matrix quadrants (q1: Urgent & Important, q2: Important Not Urgent, q3: Urgent Not Important, q4: Not Urgent Not Important) and estimate duration (e.g. 30m, 1h, 2h).
+          const prompt = `You are an expert productivity assistant. Classify the following task into the Eisenhower Matrix.
+          
           Task: "${title}"
-          Details: "${description || ''}"
-          Return ONLY valid JSON: { "category": "q1"|"q2"|"q3"|"q4", "duration": "string" }`;
+          Additional Details: "${description || ''}"
+          
+          Definitions:
+          - q1: Urgent & Important (Crises, pressing problems, deadline-driven projects)
+          - q2: Important, Not Urgent (Prevention, relationship building, planning, recreation)
+          - q3: Urgent, Not Important (Interruptions, some calls, some mail, some reports)
+          - q4: Not Urgent, Not Important (Trivia, busy work, time wasters)
+          
+          Output Requirement:
+          - Return ONLY a valid JSON object.
+          - Do not wrap in markdown (e.g., no \`\`\`json).
+          - Estimate duration if possible (e.g. "30m", "1h").
+          
+          JSON Schema:
+          { "category": "q1" | "q2" | "q3" | "q4", "duration": string }`;
           
           const response = await ai.models.generateContent({
               model: 'gemini-2.5-flash',
               contents: prompt,
               config: {
-                responseMimeType: "application/json"
+                responseMimeType: "application/json",
+                temperature: 0.1
               }
           });
           
-          const text = response.text;
+          let text = response.text;
           if (!text) return { category: 'inbox' };
           
+          // Clean potential Markdown wrappers that might break JSON.parse
+          text = text.replace(/```json\n?|\n?```/g, '').trim();
+          
           const result = JSON.parse(text);
-          return {
-              category: (['q1','q2','q3','q4'].includes(result.category) ? result.category : 'inbox') as CategoryId,
-              duration: result.duration
-          };
+          const cat = result.category?.toLowerCase();
+          
+          if (['q1', 'q2', 'q3', 'q4'].includes(cat)) {
+              return { 
+                  category: cat as CategoryId, 
+                  duration: result.duration 
+              };
+          }
+          
+          return { category: 'inbox' };
 
       } catch (e) {
           console.error("AI Classification failed", e);
@@ -228,7 +253,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     category: aiResult.category,
                     duration: duration || aiResult.duration // keep user duration if provided, else use AI
                 });
-                if (navigator.vibrate) navigator.vibrate(20); // subtle feedback when AI sorts it
+                if (navigator.vibrate) navigator.vibrate([20, 30, 20]); // Feedback pattern
             }
         } catch (e) {
             console.warn("AI Auto-sort failed silently", e);
