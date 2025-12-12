@@ -262,30 +262,40 @@ export const ListView: React.FC = () => {
   // Logic: Show undated tasks if we are viewing Today or Future
   const showUndatedTasks = selectedDate >= todayStr;
 
-  const tasksForDate = tasks.filter(task => !task.completed && task.plannedDate === selectedDate);
-  const undatedTasks = showUndatedTasks 
-    ? tasks.filter(task => !task.completed && !task.plannedDate)
-    : [];
+  // --- Filtering Logic (Revised) ---
+  
+  // 1. Inbox: STRICTLY category 'inbox', regardless of date (though usually undated)
+  const inboxTasks = tasks.filter(task => !task.completed && task.category === 'inbox');
+
+  // 2. Active List: Non-Inbox tasks that match the date logic
+  //    Matches if: Category != 'inbox' AND (Has Specific Date OR (Has No Date AND We allow undated))
+  const activeTasks = tasks.filter(task => {
+      if (task.completed || task.category === 'inbox') return false;
+      
+      const hasCorrectDate = task.plannedDate === selectedDate;
+      const isUndatedAndVisible = !task.plannedDate && showUndatedTasks;
+      
+      return hasCorrectDate || isUndatedAndVisible;
+  });
     
+  // 3. Completed: Matches selected date
   const completedTasks = tasks.filter(task => task.completed && task.plannedDate === selectedDate);
 
   // --- Inbox Zero Logic ---
-  const prevBacklogCount = useRef(undatedTasks.length);
+  const prevInboxCount = useRef(inboxTasks.length);
 
   useEffect(() => {
-    // Check if backlog dropped to 0 from a positive number
-    if (prevBacklogCount.current > 0 && undatedTasks.length === 0) {
+    // Check if inbox dropped to 0 from a positive number
+    if (prevInboxCount.current > 0 && inboxTasks.length === 0) {
         setShowInboxZeroAnim(true);
         const timer = setTimeout(() => setShowInboxZeroAnim(false), 2500); // Show celebration for 2.5s
         return () => clearTimeout(timer);
     }
-    prevBacklogCount.current = undatedTasks.length;
-  }, [undatedTasks.length]);
+    prevInboxCount.current = inboxTasks.length;
+  }, [inboxTasks.length]);
   // ------------------------
 
   const sortTasks = (taskList: Task[]) => {
-      // Sort Order: Inbox -> Q1 -> Q2 -> Q3 -> Q4
-      // This ensures Inbox items are at the top of the backlog list
       const priorityOrder: Record<CategoryId, number> = { 'inbox': 0, 'q1': 1, 'q2': 2, 'q3': 3, 'q4': 4 };
       return [...taskList].sort((a, b) => {
           const pDiff = priorityOrder[a.category] - priorityOrder[b.category];
@@ -294,8 +304,8 @@ export const ListView: React.FC = () => {
       });
   };
 
-  const sortedPlanned = sortTasks(tasksForDate);
-  const sortedBacklog = sortTasks(undatedTasks);
+  const sortedActive = sortTasks(activeTasks);
+  const sortedInbox = sortTasks(inboxTasks);
 
   const handleCategorize = (task: Task) => {
       setCategorizingTask(task);
@@ -316,17 +326,17 @@ export const ListView: React.FC = () => {
             </div>
         )}
 
-        {/* Inbox / Backlog / Undated Section */}
-        {sortedBacklog.length > 0 && (
+        {/* Inbox Section (Strictly Inbox Category) */}
+        {sortedInbox.length > 0 && (
             <div className="bg-gray-50/80 rounded-2xl p-1 border border-dashed border-gray-300 mb-6 transition-all duration-300">
                  <div className="px-3 py-2 flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('list.section.backlog')}</span>
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('matrix.inbox')}</span>
                     </div>
-                    <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-md font-bold">{sortedBacklog.length}</span>
+                    <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-md font-bold">{sortedInbox.length}</span>
                 </div>
-                 {sortedBacklog.map(task => (
+                 {sortedInbox.map(task => (
                      <div key={task.id} className="relative h-[52px] mb-1 mx-1">
                         <SwipeableTask 
                           task={task} 
@@ -342,14 +352,14 @@ export const ListView: React.FC = () => {
             </div>
         )}
 
-        {/* Planned Tasks Section */}
-        {sortedPlanned.length > 0 && (
+        {/* Planned / Active Section (Includes Undated Categorized) */}
+        {sortedActive.length > 0 && (
             <div className="mb-6 animate-fade-in space-y-3">
                 <div className="px-3 flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-black"></div>
                     <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">{t('list.section.planned')}</span>
                 </div>
-                {sortedPlanned.map(task => (
+                {sortedActive.map(task => (
                     <div key={task.id} className="relative h-[84px] mb-3">
                         <SwipeableTask 
                           task={task} 
@@ -395,7 +405,7 @@ export const ListView: React.FC = () => {
             </div>
         )}
 
-        {sortedPlanned.length === 0 && sortedBacklog.length === 0 && completedTasks.length === 0 && !showInboxZeroAnim && (
+        {sortedActive.length === 0 && sortedInbox.length === 0 && completedTasks.length === 0 && !showInboxZeroAnim && (
             <div className="flex flex-col items-center justify-center pt-20 opacity-40">
                 <div className="w-16 h-16 bg-gray-200 rounded-full mb-4"></div>
                 <p className="text-sm font-bold text-gray-400">{t('list.empty')}</p>
@@ -411,7 +421,10 @@ export const ListView: React.FC = () => {
         <CategorySheet 
             task={categorizingTask} 
             onClose={() => setCategorizingTask(null)} 
-            onMove={moveTask} 
+            onMove={(id, cat) => {
+                // Modified: Only update category, DO NOT touch the date
+                updateTask(id, { category: cat });
+            }} 
         />
       )}
     </div>
