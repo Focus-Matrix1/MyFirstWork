@@ -2,13 +2,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useRe
 import { Task, CategoryId, Habit } from '../types';
 import { GoogleGenAI } from "@google/genai";
 
-// --- CONFIGURATION ---
-// The API Key is normally loaded from environment variables.
-// If you are running this locally without env vars, you can paste your key below inside the quotes.
-// Get your key at: https://aistudio.google.com/app/apikey
-const GEMINI_API_KEY = "AIzaSyD9piPuyDV_J8-quGj3yZRq0r1se54UYOQ"; 
-// ---------------------
-
 interface TaskContextType {
   tasks: Task[];
   addTask: (title: string, category?: CategoryId, date?: string, description?: string, duration?: string) => void;
@@ -171,13 +164,13 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // --- AI Classification ---
   const classifyTaskWithAI = async (title: string, description?: string): Promise<{ category: CategoryId, duration?: string }> => {
-      if (!GEMINI_API_KEY) {
-          console.warn("AI Mode: No API Key provided");
+      if (!process.env.API_KEY) {
+          console.warn("AI Mode: No API Key provided in environment");
           return { category: 'inbox' }; 
       }
 
       try {
-          const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
           const prompt = `You are an expert productivity assistant. Classify the following task into the Eisenhower Matrix.
           
           Task: "${title}"
@@ -254,7 +247,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // AI Classification Background Process
     // Trigger if AI mode is ON, and user hasn't explicitly categorized it (defaults to inbox)
     if (aiMode && category === 'inbox') {
-        if (!GEMINI_API_KEY) {
+        if (!process.env.API_KEY) {
             console.warn("AI Skipped: Missing API Key");
             // Optional: alert user or handle UI feedback here
             return;
@@ -438,7 +431,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       tasks, 
       addTask, 
       updateTask, 
-      moveTask,
+      moveTask, 
       reorderTask,
       completeTask, 
       deleteTask, 
@@ -460,7 +453,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       aiMode,
       setAiMode,
-      isApiKeyMissing: !GEMINI_API_KEY
+      isApiKeyMissing: !process.env.API_KEY
     }}>
       {children}
     </TaskContext.Provider>

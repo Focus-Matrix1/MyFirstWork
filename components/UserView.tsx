@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTasks } from '../context/TaskContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -140,21 +141,23 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         )}
                     </div>
 
-                    {/* AI Toggle */}
-                    <div onClick={() => setAiMode(!aiMode)} className="flex items-center justify-between bg-white border border-gray-100 p-4 rounded-2xl active:bg-gray-50 cursor-pointer">
-                        <div className="flex items-center gap-3">
-                            <Bot className="w-5 h-5 text-purple-600" />
-                            <div>
-                                <span className="font-bold text-gray-700 block flex items-center gap-2">
-                                    {t('user.ai')}
-                                    {isApiKeyMissing && <AlertTriangle className="w-3 h-3 text-orange-500" />}
-                                </span>
-                                <span className={`text-[10px] font-medium ${isApiKeyMissing ? 'text-orange-500' : 'text-gray-400'}`}>
-                                    {isApiKeyMissing ? 'API Key Missing (Check TaskContext.tsx)' : t('user.ai.desc')}
-                                </span>
+                    {/* AI Config Section */}
+                    <div className="bg-white border border-gray-100 p-4 rounded-2xl space-y-4">
+                         {/* Toggle */}
+                         <div onClick={() => setAiMode(!aiMode)} className="flex items-center justify-between cursor-pointer">
+                            <div className="flex items-center gap-3">
+                                <Bot className="w-5 h-5 text-purple-600" />
+                                <div>
+                                    <span className="font-bold text-gray-700 block flex items-center gap-2">
+                                        {t('user.ai')}
+                                    </span>
+                                    <span className={`text-[10px] font-medium ${isApiKeyMissing ? 'text-orange-500' : 'text-gray-400'}`}>
+                                        {isApiKeyMissing ? 'Configure Key in config.ts' : t('user.ai.desc')}
+                                    </span>
+                                </div>
                             </div>
+                            <div className={`w-10 h-6 rounded-full relative transition-colors ${aiMode ? 'bg-purple-600' : 'bg-gray-200'}`}><div className={`w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition-transform ${aiMode ? 'translate-x-4' : ''}`}></div></div>
                         </div>
-                        <div className={`w-10 h-6 rounded-full relative transition-colors ${aiMode ? 'bg-purple-600' : 'bg-gray-200'}`}><div className={`w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition-transform ${aiMode ? 'translate-x-4' : ''}`}></div></div>
                     </div>
 
                     {/* Language */}
