@@ -3,10 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../config';
 
 // Check if credentials are configured to prevent crash
-const isConfigured = SUPABASE_URL.startsWith('http');
+const isConfigured = SUPABASE_URL && SUPABASE_URL.startsWith('http');
 
 if (!isConfigured) {
-    console.warn('Supabase is not configured. Cloud features will not work. Please update config.ts');
+    console.warn('Supabase is not configured. Cloud features will not work.');
 }
 
 // Use placeholder URL if not configured to prevent "Invalid supabaseUrl" error on startup
