@@ -1,4 +1,3 @@
-
 import React, { useState, forwardRef } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence, useAnimation, PanInfo } from 'framer-motion';
 import { Check, Coffee, BookOpen, Dumbbell, Droplets, Repeat, Zap, Sparkles, Wind } from 'lucide-react';
@@ -81,8 +80,8 @@ const HabitCard = forwardRef<HTMLDivElement, { habit: Habit; onComplete: (id: st
       exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
       className="relative w-full mb-4 group touch-pan-y"
     >
-      {/* Timeline connection line */}
-      <div className="absolute left-[29px] -top-6 bottom-0 w-[1px] bg-stone-200 z-0 last:hidden" />
+      {/* Timeline connection line - Positioned to align with icon center */}
+      <div className="absolute left-[39px] -top-6 bottom-0 w-[1px] bg-stone-200 z-0 last:hidden" />
 
       <motion.div
         style={{ x, scale: contentScale }}
@@ -221,9 +220,7 @@ export const HabitView: React.FC = () => {
 
       {/* --- Body: Active List --- */}
       <main className="flex-1 relative no-scrollbar overflow-y-auto px-4 pb-32">
-             {/* Timeline Line */}
-             <div className="absolute left-[37px] top-0 bottom-0 w-[1px] bg-gradient-to-b from-gray-200 to-transparent z-0 opacity-50" />
-
+             {/* Note: Global timeline line removed to avoid repetition with per-habit connector lines */}
              <AnimatePresence mode='popLayout'>
                 {activeHabits.map(habit => (
                     <HabitCard 

@@ -171,10 +171,12 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       try {
+          // Fix: Always create a new instance of GoogleGenAI right before the API call
           const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
           
+          // Fix: Use 'gemini-3-flash-preview' for basic text tasks as per guidelines
           const response = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
+              model: 'gemini-3-flash-preview',
               contents: `Classify the task: "${title}". Description: "${description || ''}"`,
               config: {
                 systemInstruction: "You are an expert productivity assistant. Classify the task into the Eisenhower Matrix. q1: Urgent & Important, q2: Important Not Urgent, q3: Urgent Not Important, q4: Not Urgent Not Important. Estimate duration (e.g. 30m, 1h).",
@@ -190,6 +192,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               }
           });
           
+          // Fix: Use .text property directly (not a method)
           const text = response.text;
           if (!text) return { category: 'inbox' };
           
