@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { LayoutGrid, Trash2, CheckCircle2, Check, Hourglass, ChevronDown, ChevronRight } from 'lucide-react';
 import { useTasks } from '../context/TaskContext';
@@ -7,6 +8,7 @@ import { WeeklyCalendar } from './WeeklyCalendar';
 import { TaskDetailModal } from './TaskDetailModal';
 import { CategorySheet } from './CategorySheet';
 import { useSwipeable } from '../hooks/useSwipeable';
+import { LAYOUT, ANIMATION_DURATIONS } from '../constants';
 
 const SwipeableTask: React.FC<{ 
   task: Task; 
@@ -17,12 +19,11 @@ const SwipeableTask: React.FC<{
   t: (key: string) => string;
   hardcoreMode: boolean;
 }> = ({ task, onCategorize, onDelete, onComplete, onClick, t, hardcoreMode }) => {
-  const ACTION_WIDTH = 80;
   const isInbox = task.category === 'inbox';
   const isLocked = hardcoreMode && !isInbox;
 
   const { offset, handlePointerDown, handlePointerMove, handlePointerUp, reset } = useSwipeable({
-    actionWidth: ACTION_WIDTH,
+    actionWidth: LAYOUT.SWIPE_ACTION_WIDTH_PX,
     disabled: isLocked
   });
 
@@ -44,13 +45,13 @@ const SwipeableTask: React.FC<{
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden group select-none touch-pan-y">
         <div className="absolute inset-0 flex z-0">
-            <div className="absolute left-0 top-0 bottom-0 bg-blue-500 z-0 flex" style={{ width: ACTION_WIDTH }}>
+            <div className="absolute left-0 top-0 bottom-0 bg-blue-500 z-0 flex" style={{ width: LAYOUT.SWIPE_ACTION_WIDTH_PX }}>
                 <button onClick={(e) => { e.stopPropagation(); onCategorize(task); reset(); }} className="w-full h-full flex flex-col items-center justify-center text-white hover:bg-blue-600 transition-colors">
                     <LayoutGrid className="w-5 h-5 mb-1" />
                     <span className="text-[10px] font-bold">{t('list.action.categorize')}</span>
                 </button>
             </div>
-            <div className="absolute right-0 top-0 bottom-0 bg-red-500 z-0 flex justify-end" style={{ width: ACTION_WIDTH }}>
+            <div className="absolute right-0 top-0 bottom-0 bg-red-500 z-0 flex justify-end" style={{ width: LAYOUT.SWIPE_ACTION_WIDTH_PX }}>
                 <button onClick={(e) => { e.stopPropagation(); onDelete(task.id); reset(); }} className="w-full h-full flex flex-col items-center justify-center text-white hover:bg-red-600 transition-colors">
                     <Trash2 className="w-5 h-5 mb-1" />
                     <span className="text-[10px] font-bold">{t('list.action.delete')}</span>
@@ -110,7 +111,7 @@ export const ListView: React.FC = () => {
   useEffect(() => {
     if (prevInboxCount.current > 0 && inboxTasks.length === 0) {
         setShowInboxZeroAnim(true);
-        const timer = setTimeout(() => setShowInboxZeroAnim(false), 2500);
+        const timer = setTimeout(() => setShowInboxZeroAnim(false), ANIMATION_DURATIONS.INBOX_ZERO_CELEBRATION);
         return () => clearTimeout(timer);
     }
     prevInboxCount.current = inboxTasks.length;

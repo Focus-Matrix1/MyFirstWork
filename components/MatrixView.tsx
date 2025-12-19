@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Inbox, ChevronLeft, Zap, Calendar, Users, Coffee, AlignLeft } from 'lucide-react';
@@ -6,6 +7,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { Task, QuadrantId } from '../types';
 import { TaskDetailModal } from './TaskDetailModal';
 import { useDraggable } from '../hooks/useDraggable';
+import { INTERACTION, ANIMATION_DURATIONS, LAYOUT } from '../constants';
 
 const DraggableTaskItem: React.FC<{
   task: Task;
@@ -22,15 +24,15 @@ const DraggableTaskItem: React.FC<{
     startPos.current = { x: e.clientX, y: e.clientY };
     const target = e.currentTarget as HTMLElement;
     timeoutRef.current = setTimeout(() => {
-        if (navigator.vibrate) navigator.vibrate(50);
+        if (navigator.vibrate) navigator.vibrate(INTERACTION.VIBRATION.SUCCESS);
         onDragStart(task, e.clientX, e.clientY, target);
-    }, 250);
+    }, INTERACTION.DRAG_LONG_PRESS_MS);
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (timeoutRef.current && startPos.current) {
         const dist = Math.hypot(e.clientX - startPos.current.x, e.clientY - startPos.current.y);
-        if (dist > 10) {
+        if (dist > INTERACTION.DRAG_DISTANCE_CANCEL_PX) {
             clearTimeout(timeoutRef.current);
             timeoutRef.current = null;
         }
@@ -146,14 +148,14 @@ export const MatrixView: React.FC = () => {
   useEffect(() => {
     if (inboxShakeTrigger > 0) {
         setInboxShaking(true);
-        const timer = setTimeout(() => setInboxShaking(false), 500);
+        const timer = setTimeout(() => setInboxShaking(false), ANIMATION_DURATIONS.SHAKE_FEEDBACK);
         return () => clearTimeout(timer);
     }
   }, [inboxShakeTrigger]);
 
   const onDrop = useCallback((task: Task, target: { zone: QuadrantId, index: number }) => {
     reorderTask(task.id, target.zone, target.index);
-    if (navigator.vibrate) navigator.vibrate(20);
+    if (navigator.vibrate) navigator.vibrate(INTERACTION.VIBRATION.SOFT);
   }, [reorderTask]);
 
   const { dragItem, dropTarget, startDrag } = useDraggable({
@@ -163,11 +165,11 @@ export const MatrixView: React.FC = () => {
 
   const handleDragStart = (task: Task, clientX: number, clientY: number, element: HTMLElement) => {
     if (hardcoreMode && task.category !== 'inbox') {
-        if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+        if (navigator.vibrate) navigator.vibrate(INTERACTION.VIBRATION.HARD);
         element.classList.remove('animate-shake');
         void element.offsetWidth;
         element.classList.add('animate-shake');
-        setTimeout(() => element.classList.remove('animate-shake'), 500);
+        setTimeout(() => element.classList.remove('animate-shake'), ANIMATION_DURATIONS.SHAKE_FEEDBACK);
         return;
     }
     startDrag(task, clientX, clientY, element);
@@ -191,7 +193,7 @@ export const MatrixView: React.FC = () => {
         </button>
       </div>
 
-      <div className="flex-1 mx-4 mb-[calc(110px+env(safe-area-inset-bottom))] bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden grid grid-cols-2 grid-rows-2 gap-px border border-gray-100 relative select-none">
+      <div className={`flex-1 mx-4 mb-[calc(${LAYOUT.BOTTOM_NAV_RESERVE_PX}px+env(safe-area-inset-bottom))] bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden grid grid-cols-2 grid-rows-2 gap-px border border-gray-100 relative select-none`}>
          <div className="absolute inset-0 bg-gray-100 pointer-events-none"></div>
         {(['q1', 'q2', 'q3', 'q4'] as const).map(id => (
             <Quadrant 
@@ -215,11 +217,11 @@ export const MatrixView: React.FC = () => {
       </div>
 
       <div 
-        className={`absolute inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${isInboxOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`absolute inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity duration-${ANIMATION_DURATIONS.MODAL_TRANSITION} ${isInboxOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setInboxOpen(false)}
       ></div>
       
-      <div className={`absolute top-0 left-0 bottom-0 w-[85%] max-w-[320px] bg-white z-[70] shadow-2xl transition-transform duration-300 flex flex-col rounded-r-[32px] ${isInboxOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`absolute top-0 left-0 bottom-0 w-[85%] max-w-[320px] bg-white z-[70] shadow-2xl transition-transform duration-${ANIMATION_DURATIONS.MODAL_TRANSITION} flex flex-col rounded-r-[32px] ${isInboxOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="px-6 pt-12 pb-4 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center shrink-0">
           <div>
              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">

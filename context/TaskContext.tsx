@@ -1,8 +1,10 @@
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Task, CategoryId, Habit } from '../types';
 import { useSound } from '../hooks/useSound';
 import { useTaskClassifier } from '../hooks/useTaskClassifier';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { INTERACTION } from '../constants';
 
 interface TaskContextType {
   tasks: Task[];
@@ -102,7 +104,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     category: aiResult.category,
                     duration: duration || aiResult.duration
                 });
-                if (navigator.vibrate) navigator.vibrate([20, 30, 20]);
+                if (navigator.vibrate) navigator.vibrate(INTERACTION.VIBRATION.AI_AUTO_SORT);
             }
         } catch (e) {
             console.warn("AI Auto-sort failed", e);
@@ -152,8 +154,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (isNowCompleted) {
              playSuccessSound();
              if (navigator.vibrate) {
-                 if (t.category === 'q1' || t.category === 'q2') navigator.vibrate([40, 30, 40]); 
-                 else navigator.vibrate(20);
+                 if (t.category === 'q1' || t.category === 'q2') navigator.vibrate(INTERACTION.VIBRATION.HARD); 
+                 else navigator.vibrate(INTERACTION.VIBRATION.SOFT);
              }
         }
         return { ...t, completed: isNowCompleted, completedAt: isNowCompleted ? Date.now() : undefined };
@@ -186,7 +188,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           } else {
               newDates = [...h.completedDates, date].sort();
               playSuccessSound(1000);
-              if (navigator.vibrate) navigator.vibrate(30);
+              if (navigator.vibrate) navigator.vibrate(INTERACTION.VIBRATION.MEDIUM);
           }
           let currentStreak = 0;
           const todayStr = getTodayString();

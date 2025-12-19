@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useCallback } from 'react';
+import { INTERACTION } from '../constants';
 
 interface SwipeOptions {
   actionWidth: number;
@@ -14,7 +15,6 @@ export const useSwipeable = ({ actionWidth, disabled }: SwipeOptions) => {
   const isDragging = useRef(false);
   const directionLock = useRef<'horizontal' | 'vertical' | null>(null);
 
-  // Fix: Explicitly import React to resolve missing namespace for PointerEvent
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (disabled) return;
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
@@ -25,7 +25,6 @@ export const useSwipeable = ({ actionWidth, disabled }: SwipeOptions) => {
     startOffset.current = offset;
   }, [disabled, offset]);
 
-  // Fix: Explicitly import React to resolve missing namespace for PointerEvent
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!isDragging.current) return;
     
@@ -33,7 +32,7 @@ export const useSwipeable = ({ actionWidth, disabled }: SwipeOptions) => {
     const dy = e.clientY - startY.current;
 
     if (!directionLock.current) {
-      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+      if (Math.abs(dx) > INTERACTION.GESTURE_LOCK_THRESHOLD_PX || Math.abs(dy) > INTERACTION.GESTURE_LOCK_THRESHOLD_PX) {
         directionLock.current = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical';
       }
     }

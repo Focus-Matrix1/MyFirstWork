@@ -9,6 +9,7 @@ import { ProfileView } from './components/UserView';
 import { LayoutGrid, ListTodo, User, Plus, Check, AlertTriangle, Repeat } from 'lucide-react';
 import { ViewState } from './types';
 import { AddModal } from './components/AddModal';
+import { INTERACTION, ANIMATION_DURATIONS } from './constants';
 
 // --- Error Boundary Component ---
 interface ErrorBoundaryProps {
@@ -20,18 +21,14 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// Fix: Use the imported Component directly from 'react' to ensure correct inheritance of props and state.
-// This resolves the error where 'props' property was not found on the class instance.
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // Fix: Explicitly declare state as a property
+// Explicitly extend React.Component to ensure props are correctly typed and inherited
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = {
     hasError: false,
     error: null
   };
 
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-  }
+  // Removed redundant constructor that only called super(props) to improve type inference
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
@@ -51,7 +48,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 
   render() {
-    // Fix: Access state via this.state
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center h-screen p-8 text-center bg-[#F5F7FA]">
@@ -77,7 +73,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       );
     }
 
-    // Fix: Correctly return children from props to resolve property access error.
+    // this.props is now correctly recognized via inheritance from React.Component
     return this.props.children;
   }
 }
@@ -93,8 +89,8 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (addSuccessTrigger > 0) {
         setSuccessAnim(true);
-        if (navigator.vibrate) navigator.vibrate(50);
-        const timer = setTimeout(() => setSuccessAnim(false), 800);
+        if (navigator.vibrate) navigator.vibrate(INTERACTION.VIBRATION.SUCCESS);
+        const timer = setTimeout(() => setSuccessAnim(false), ANIMATION_DURATIONS.SUCCESS_FEEDBACK);
         return () => clearTimeout(timer);
     }
   }, [addSuccessTrigger]);
@@ -102,9 +98,9 @@ const AppContent: React.FC = () => {
   const NavButton = ({ view, icon: Icon }: { view: ViewState; icon: React.ElementType }) => (
     <button 
       onClick={() => setCurrentView(view)}
-      className={`flex flex-col items-center gap-1 w-12 group transition-colors duration-200 ${currentView === view ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}
+      className={`flex flex-col items-center gap-1 w-12 group transition-colors duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === view ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}
     >
-      <Icon className={`w-6 h-6 stroke-[2.5] transition-transform duration-200 ${currentView === view ? 'scale-110' : 'group-active:scale-90'}`} />
+      <Icon className={`w-6 h-6 stroke-[2.5] transition-transform duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === view ? 'scale-110' : 'group-active:scale-90'}`} />
     </button>
   );
 
@@ -113,16 +109,16 @@ const AppContent: React.FC = () => {
         
         {/* Main Content Area */}
         <div className="flex-1 overflow-hidden relative">
-            <div className={`w-full h-full transition-opacity duration-300 ${currentView === 'matrix' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
+            <div className={`w-full h-full transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'matrix' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
                 <MatrixView />
             </div>
-            <div className={`w-full h-full transition-opacity duration-300 ${currentView === 'list' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
+            <div className={`w-full h-full transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'list' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
                 <ListView />
             </div>
-             <div className={`w-full h-full transition-opacity duration-300 ${currentView === 'habits' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
+             <div className={`w-full h-full transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'habits' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
                 <HabitView />
             </div>
-            <div className={`w-full h-full transition-opacity duration-300 ${currentView === 'profile' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
+            <div className={`w-full h-full transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'profile' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
                 <ProfileView />
             </div>
         </div>
@@ -138,7 +134,7 @@ const AppContent: React.FC = () => {
                 className="relative -top-8 group"
             >
                 <div 
-                    className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-xl shadow-black/20 transition-all duration-300 border-[4px] border-white ring-1 ring-gray-100 ${
+                    className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-xl shadow-black/20 transition-all duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} border-[4px] border-white ring-1 ring-gray-100 ${
                         isSuccessAnim ? 'bg-green-500 scale-110 rotate-12' : 'bg-black group-hover:scale-105 group-active:scale-95'
                     }`}
                 >
