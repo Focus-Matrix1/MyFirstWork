@@ -2,9 +2,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTasks } from '../context/TaskContext';
 import { useLanguage } from '../context/LanguageContext';
-import { User, Settings, Zap, Clock, TrendingUp, Cloud, Languages, ShieldAlert, Trash2, X, Loader2, RefreshCw, BarChart3, CheckCircle2, Bot, AlertTriangle, Download, Smartphone, Share, MoreVertical } from 'lucide-react';
+import { User, Settings, Zap, Clock, TrendingUp, Cloud, Languages, ShieldAlert, Trash2, X, Loader2, RefreshCw, BarChart3, CheckCircle2, Bot, AlertTriangle, Download, Smartphone, Share, MoreVertical, Flame, CalendarDays } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
+import { Habit } from '../types';
 
 // --- Helper Functions ---
 const parseDuration = (durationStr?: string): number => {
@@ -20,6 +21,70 @@ const parseDuration = (durationStr?: string): number => {
     case 'd': return val * 24;
     default: return 0;
   }
+};
+
+// --- Heatmap Component ---
+const HabitHeatmap: React.FC<{ habit: Habit }> = ({ habit }) => {
+    const { t } = useLanguage();
+    
+    const heatmapData = useMemo(() => {
+        const daysToShow = 91; // 13 weeks
+        const result = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (let i = daysToShow - 1; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            const isCompleted = habit.completedDates.includes(dateStr);
+            result.push({ date: dateStr, isCompleted });
+        }
+        
+        // Group into weeks for the "GitHub" column look
+        const weeks = [];
+        for (let i = 0; i < result.length; i += 7) {
+            weeks.push(result.slice(i, i + 7));
+        }
+        return weeks;
+    }, [habit.completedDates]);
+
+    return (
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${habit.color}`}></div>
+                    <span className="text-sm font-bold text-gray-800">{habit.title}</span>
+                </div>
+                {habit.streak > 0 && (
+                    <div className="flex items-center gap-1 text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full">
+                        <Flame className="w-3 h-3 fill-current" />
+                        <span className="text-[10px] font-black">{habit.streak}</span>
+                    </div>
+                )}
+            </div>
+            
+            <div className="overflow-x-auto no-scrollbar pb-1">
+                <div className="flex gap-[3px] min-w-max">
+                    {heatmapData.map((week, wIdx) => (
+                        <div key={wIdx} className="flex flex-col gap-[3px]">
+                            {week.map((day, dIdx) => (
+                                <div 
+                                    key={day.date}
+                                    title={day.date}
+                                    className={`w-[10px] h-[10px] rounded-[2px] transition-all duration-500 ${
+                                        day.isCompleted 
+                                            ? `${habit.color} shadow-[0_0_4px_rgba(0,0,0,0.05)]` 
+                                            : 'bg-gray-100'
+                                    }`}
+                                />
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
 };
 
 // --- Install Guide Modal ---
@@ -263,7 +328,7 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 };
 
 export const ProfileView: React.FC = () => {
-  const { tasks } = useTasks();
+  const { tasks, habits } = useTasks();
   const { t, language, setLanguage } = useLanguage();
   const [showSettings, setShowSettings] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -387,11 +452,10 @@ export const ProfileView: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-3">
-             {/* Accessible Language Toggle */}
              <button 
                 onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')} 
                 className="p-3 bg-white rounded-full shadow-sm text-gray-600 active:scale-95 transition-transform"
-                title="Switch Language / 切换语言"
+                title="Switch Language"
              >
                 <Languages className="w-5 h-5" />
              </button>
@@ -433,7 +497,7 @@ export const ProfileView: React.FC = () => {
             </div>
         </div>
 
-        {/* Weekly Trend Bar Chart (NEW) */}
+        {/* Weekly Trend Bar Chart */}
         <div className="bg-white rounded-[24px] p-5 shadow-sm">
             <h3 className="text-[13px] font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-gray-500" />
@@ -477,6 +541,19 @@ export const ProfileView: React.FC = () => {
                 </svg>
             </div>
         </div>
+
+        {/* Habit Consistency Heatmaps */}
+        {habits.length > 0 && (
+            <div className="space-y-3">
+                <h3 className="text-[13px] font-bold text-gray-900 ml-1 flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-gray-500" />
+                    {t('stats.habit_consistency')}
+                </h3>
+                {habits.map(habit => (
+                    <HabitHeatmap key={habit.id} habit={habit} />
+                ))}
+            </div>
+        )}
       </div>
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}

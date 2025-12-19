@@ -67,6 +67,7 @@ const translations: Record<Language, Record<string, string>> = {
     'stats.streak': 'Day Streak',
     'stats.trend': 'Flow Rhythm',
     'stats.distribution': 'Energy Allocation',
+    'stats.habit_consistency': 'Habit Consistency',
     'stats.quote': '“First Things First” doesn’t mean doing everything, but investing your best energy in Q2.',
 
     'user.guest': 'Guest User',
@@ -167,6 +168,7 @@ const translations: Record<Language, Record<string, string>> = {
     'stats.streak': '连续产出',
     'stats.trend': '产出节奏',
     'stats.distribution': '精力分布',
+    'stats.habit_consistency': '习惯养成趋势',
     'stats.quote': '“要事第一”并不是指把所有事都做完，而是把最大的精力投放在第二象限。',
 
     'user.guest': '访客用户',
@@ -218,12 +220,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [language, setLanguage] = useState<Language>(() => {
     try {
       if (typeof window === 'undefined') return 'en';
-      
-      // 1. Check saved preference
       const saved = localStorage.getItem('focus-matrix-lang');
       if (saved === 'zh' || saved === 'en') return saved;
-      
-      // 2. Check navigator.languages (array of preferred languages)
       const nav = window.navigator;
       if (nav.languages && nav.languages.length > 0) {
         for (const lang of nav.languages) {
@@ -231,8 +229,6 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
            if (lang.toLowerCase().startsWith('en')) return 'en';
         }
       }
-      
-      // 3. Fallback to navigator.language (single)
       const browserLang = nav.language.toLowerCase();
       return browserLang.startsWith('zh') ? 'zh' : 'en';
     } catch {
