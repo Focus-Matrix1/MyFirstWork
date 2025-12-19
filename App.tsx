@@ -20,8 +20,9 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// Fix: Explicitly use React.Component and define state property to resolve "Property does not exist" TS errors
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+// Fix: Use the imported Component directly from 'react' to ensure correct inheritance of props and state.
+// This resolves the error where 'props' property was not found on the class instance.
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   // Fix: Explicitly declare state as a property
   public state: ErrorBoundaryState = {
     hasError: false,
@@ -76,7 +77,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       );
     }
 
-    // Fix: Correctly return children from props
+    // Fix: Correctly return children from props to resolve property access error.
     return this.props.children;
   }
 }
