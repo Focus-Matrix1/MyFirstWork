@@ -1,7 +1,8 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTasks } from '../context/TaskContext';
 import { useLanguage } from '../context/LanguageContext';
-import { User, Settings, Zap, Clock, TrendingUp, Cloud, Languages, ShieldAlert, Trash2, X, Loader2, RefreshCw, BarChart3, CheckCircle2, Bot, AlertTriangle } from 'lucide-react';
+import { User, Settings, Zap, Clock, TrendingUp, Cloud, Languages, ShieldAlert, Trash2, X, Loader2, RefreshCw, BarChart3, CheckCircle2, Bot, AlertTriangle, Download, Smartphone, Share, MoreVertical } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -21,6 +22,68 @@ const parseDuration = (durationStr?: string): number => {
   }
 };
 
+// --- Install Guide Modal ---
+const InstallGuide: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const { t } = useLanguage();
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+
+    return (
+        <div className="fixed inset-0 z-[130] bg-black/60 backdrop-blur-md flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl slide-up space-y-6" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-bold text-gray-900">{t('user.install')}</h3>
+                    <button onClick={onClose} className="p-2 bg-gray-50 rounded-full"><X className="w-5 h-5 text-gray-400" /></button>
+                </div>
+                
+                <div className="space-y-6">
+                    <p className="text-sm text-gray-500 leading-relaxed">
+                        {t('user.install.desc')}
+                    </p>
+
+                    {isIOS ? (
+                        <div className="space-y-4">
+                            <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
+                                    <Share className="w-4 h-4 text-indigo-600" />
+                                </div>
+                                <p className="text-sm font-medium text-gray-700">{t('install.ios.step1')}</p>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center shrink-0 text-indigo-600 font-bold text-xs">
+                                    +
+                                </div>
+                                <p className="text-sm font-medium text-gray-700">{t('install.ios.step2')}</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
+                                    <MoreVertical className="w-4 h-4 text-indigo-600" />
+                                </div>
+                                <p className="text-sm font-medium text-gray-700">{t('install.android.step1')}</p>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
+                                    <Download className="w-4 h-4 text-indigo-600" />
+                                </div>
+                                <p className="text-sm font-medium text-gray-700">{t('install.android.step2')}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <button 
+                    onClick={onClose}
+                    className="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl transition-transform active:scale-95"
+                >
+                    {t('install.button.close')}
+                </button>
+            </div>
+        </div>
+    );
+};
+
 // --- Settings Modal Component ---
 const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const { hardcoreMode, toggleHardcoreMode, clearAllTasks, tasks, habits, restoreTasks, aiMode, setAiMode, isApiKeyMissing } = useTasks();
@@ -28,6 +91,7 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [user, setUser] = useState<SupabaseUser | null>(null);
     const [syncing, setSyncing] = useState(false);
     const [showAuth, setShowAuth] = useState(false);
+    const [showInstallGuide, setShowInstallGuide] = useState(false);
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [isLoginMode, setIsLoginMode] = useState(true);
@@ -159,6 +223,18 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         </div>
                     </div>
 
+                    {/* Install App Button */}
+                    <div 
+                        onClick={() => setShowInstallGuide(true)} 
+                        className="flex items-center justify-between bg-white border border-gray-100 p-4 rounded-2xl active:bg-gray-50 cursor-pointer group"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Smartphone className="w-5 h-5 text-gray-500 group-hover:text-black transition-colors" />
+                            <span className="font-bold text-gray-700 group-hover:text-black transition-colors">{t('user.install')}</span>
+                        </div>
+                        <Download className="w-4 h-4 text-gray-300 group-hover:text-black transition-colors" />
+                    </div>
+
                     {/* Language */}
                     <div onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')} className="flex items-center justify-between bg-white border border-gray-100 p-4 rounded-2xl active:bg-gray-50 cursor-pointer">
                         <div className="flex items-center gap-3"><Languages className="w-5 h-5 text-gray-500" /><span className="font-bold text-gray-700">{t('user.language')}</span></div>
@@ -178,6 +254,9 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     
                     <div className="text-center text-xs text-gray-300 pt-4">{t('user.version')}</div>
                 </div>
+
+                {/* Conditional Sub-modals */}
+                {showInstallGuide && <InstallGuide onClose={() => setShowInstallGuide(false)} />}
             </div>
         </div>
     );
