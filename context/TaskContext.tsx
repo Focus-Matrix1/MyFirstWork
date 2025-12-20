@@ -4,6 +4,7 @@ import { Task, CategoryId, Habit } from '../types';
 import { useSound } from '../hooks/useSound';
 import { useTaskClassifier } from '../hooks/useTaskClassifier';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useLanguage } from './LanguageContext';
 import { INTERACTION } from '../constants';
 
 interface TaskContextType {
@@ -45,22 +46,29 @@ const getTodayString = () => {
   return `${year}-${month}-${day}`;
 };
 
-const INITIAL_TASKS: Task[] = [
-  { id: '1', title: '修复支付接口', category: 'q1', createdAt: Date.now(), completed: false, plannedDate: getTodayString(), duration: '2h' },
-  { id: '2', title: '学习 Swift UI', category: 'q2', createdAt: Date.now(), completed: false, plannedDate: getTodayString(), duration: '45m' },
-  { id: '3', title: '健身 30 分钟', category: 'q2', createdAt: Date.now(), completed: false, duration: '30m' },
-  { id: '4', title: '整理发票报销', category: 'inbox', createdAt: Date.now(), completed: false },
-  { id: '5', title: 'Review design assets', category: 'inbox', createdAt: Date.now(), completed: false },
-];
-
-const INITIAL_HABITS: Habit[] = [
-    { id: 'h1', title: '早起阅读', color: 'bg-indigo-500', icon: 'Book', createdAt: Date.now(), completedDates: [], streak: 0, frequency: '1d' },
-    { id: 'h2', title: '喝八杯水', color: 'bg-blue-400', icon: 'Droplet', createdAt: Date.now(), completedDates: [], streak: 0, frequency: '1d' },
-];
-
 export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [tasks, setTasks] = useLocalStorage<Task[]>('focus-matrix-tasks', INITIAL_TASKS);
-  const [habits, setHabits] = useLocalStorage<Habit[]>('focus-matrix-habits', INITIAL_HABITS);
+  const { t } = useLanguage();
+
+  const initialTasks: Task[] = [
+    // Task 1: Drag Demo (Place in Q3 to encourage dragging to Q1)
+    { id: '1', title: t('initial.task.1.title'), category: 'q3', createdAt: Date.now(), completed: false, plannedDate: getTodayString(), duration: '1m' },
+    // Task 2: Swipe Demo (Place in Inbox for List view visibility)
+    { id: '2', title: t('initial.task.2.title'), category: 'inbox', createdAt: Date.now(), completed: false },
+    // Task 3: Profile Demo (Place in Q2)
+    { id: '3', title: t('initial.task.3.title'), category: 'q2', createdAt: Date.now(), completed: false, duration: '2m' },
+    // Task 4: General interaction
+    { id: '4', title: t('initial.task.4.title'), category: 'inbox', createdAt: Date.now(), completed: false },
+    // Task 5: Move Demo
+    { id: '5', title: t('initial.task.5.title'), category: 'q4', createdAt: Date.now(), completed: false },
+  ];
+
+  const initialHabits: Habit[] = [
+      { id: 'h1', title: t('initial.habit.1.title'), color: 'bg-indigo-500', icon: 'Droplet', createdAt: Date.now(), completedDates: [], streak: 0, frequency: '1d' },
+      { id: 'h2', title: t('initial.habit.2.title'), color: 'bg-blue-400', icon: 'Book', createdAt: Date.now(), completedDates: [], streak: 0, frequency: '1d' },
+  ];
+
+  const [tasks, setTasks] = useLocalStorage<Task[]>('focus-matrix-tasks', initialTasks);
+  const [habits, setHabits] = useLocalStorage<Habit[]>('focus-matrix-habits', initialHabits);
   const [hardcoreMode, setHardcoreMode] = useLocalStorage<boolean>('focus-matrix-hardcore', false);
   const [aiMode, setAiMode] = useLocalStorage<boolean>('focus-matrix-ai', false);
 

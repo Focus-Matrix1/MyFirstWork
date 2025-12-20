@@ -1,4 +1,3 @@
-
 import React, { Component, useState, useEffect, ReactNode, ErrorInfo } from 'react';
 import { TaskProvider, useTasks } from './context/TaskContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -24,16 +23,13 @@ interface ErrorBoundaryState {
 /**
  * ErrorBoundary class component fixed to correctly inherit from Component with typed props and state.
  */
-// Fix: Use the imported Component directly to ensure state/props inheritance is recognized by TypeScript
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // Fix: Explicitly declare the state property on the class to resolve property access errors
-  state: ErrorBoundaryState = {
-    hasError: false,
-    error: null
-  };
-
   constructor(props: ErrorBoundaryProps) {
     super(props);
+    this.state = {
+      hasError: false,
+      error: null
+    };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
@@ -54,7 +50,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 
   render() {
-    // Fix: Accessing this.state which is now correctly recognized via inheritance and explicit declaration
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center h-screen p-8 text-center bg-[#F5F7FA]">
@@ -80,7 +75,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       );
     }
 
-    // Fix: Accessing this.props which is now correctly recognized via inheritance
     return this.props.children;
   }
 }

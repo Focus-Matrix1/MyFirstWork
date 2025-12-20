@@ -112,6 +112,15 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.switch.login': 'Already have an account? Log In',
     'auth.switch.signup': 'No account? Sign Up',
     'auth.error': 'Authentication failed. Please check credentials.',
+
+    // Initial Data - Educational Onboarding
+    'initial.task.1.title': 'Hold & drag me to "Urgent & Important" (Red)',
+    'initial.task.2.title': 'Swipe me LEFT to delete 👈',
+    'initial.task.3.title': 'Check "Profile" to enable Hardcore Mode 🛡️',
+    'initial.task.4.title': 'Tap + to add a new task',
+    'initial.task.5.title': 'Drag tasks between quadrants to prioritize',
+    'initial.habit.1.title': 'Drink Water',
+    'initial.habit.2.title': 'Read 10 Pages',
   },
   zh: {
     'matrix.title': '专注矩阵',
@@ -213,6 +222,15 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.switch.login': '已有账号？去登录',
     'auth.switch.signup': '没有账号？去注册',
     'auth.error': '认证失败，请检查账号密码。',
+
+    // Initial Data - Educational Onboarding
+    'initial.task.1.title': '长按并将我拖入“重要且紧急”（红色）',
+    'initial.task.2.title': '👈 试着向左滑动删除我',
+    'initial.task.3.title': '去“个人中心”开启硬核模式 🛡️',
+    'initial.task.4.title': '点击 + 号添加新任务',
+    'initial.task.5.title': '拖动任务在不同象限间流转',
+    'initial.habit.1.title': '喝水',
+    'initial.habit.2.title': '阅读 10 页',
   }
 };
 
