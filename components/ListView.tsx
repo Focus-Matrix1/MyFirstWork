@@ -88,6 +88,9 @@ const SwipeableTask: React.FC<{
       inbox: { bg: 'bg-gray-400', border: 'border-gray-200', text: 'text-gray-500', badgeBg: 'bg-gray-100', checkboxBorder: 'border-gray-300', checkboxBg: 'bg-white', checkColor: 'text-gray-500' }
   };
   const config = categoryConfig[task.category] || categoryConfig.inbox;
+  
+  // Dynamic Localization
+  const displayTitle = task.translationKey ? t(task.translationKey) : task.title;
 
   return (
     <div className="relative w-full mb-3 overflow-visible rounded-2xl select-none">
@@ -169,7 +172,7 @@ const SwipeableTask: React.FC<{
 
             <div className={`flex flex-col flex-1 overflow-hidden ${isInbox ? 'justify-center' : ''}`}>
                 <span className={`${isInbox ? 'text-[14px] font-medium text-gray-700' : 'text-[16px] font-semibold text-gray-900 leading-snug'} truncate ${task.completed ? 'text-gray-400 line-through' : ''}`}>
-                    {task.title}
+                    {displayTitle}
                 </span>
                 {!isInbox && (
                     <div className="flex items-center gap-2 mt-2">
@@ -301,7 +304,7 @@ export const ListView: React.FC = () => {
                                      <div className="w-5 h-5 rounded-md bg-green-500 flex items-center justify-center shrink-0">
                                         <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                                      </div>
-                                     <span className="text-[15px] font-medium text-gray-400 line-through truncate">{task.title}</span>
+                                     <span className="text-[15px] font-medium text-gray-400 line-through truncate">{task.translationKey ? t(task.translationKey) : task.title}</span>
                                 </motion.div>
                             ))}
                         </motion.div>

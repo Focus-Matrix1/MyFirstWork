@@ -51,24 +51,25 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const initialTasks: Task[] = [
     // Task 1: Drag Demo (Place in Q3 to encourage dragging to Q1)
-    { id: '1', title: t('initial.task.1.title'), category: 'q3', createdAt: Date.now(), completed: false, plannedDate: getTodayString(), duration: '1m' },
+    { id: '1', title: t('initial.task.drag'), translationKey: 'initial.task.drag', category: 'q3', createdAt: Date.now(), completed: false, plannedDate: getTodayString(), duration: '1m' },
     // Task 2: Swipe Demo (Place in Inbox for List view visibility)
-    { id: '2', title: t('initial.task.2.title'), category: 'inbox', createdAt: Date.now(), completed: false },
-    // Task 3: Profile Demo (Place in Q2)
-    { id: '3', title: t('initial.task.3.title'), category: 'q2', createdAt: Date.now(), completed: false, duration: '2m' },
-    // Task 4: General interaction
-    { id: '4', title: t('initial.task.4.title'), category: 'inbox', createdAt: Date.now(), completed: false },
-    // Task 5: Move Demo
-    { id: '5', title: t('initial.task.5.title'), category: 'q4', createdAt: Date.now(), completed: false },
+    { id: '2', title: t('initial.task.swipe'), translationKey: 'initial.task.swipe', category: 'inbox', createdAt: Date.now(), completed: false },
+    // Task 3: Profile Demo (Place in Q4)
+    { id: '3', title: t('initial.task.hardcore'), translationKey: 'initial.task.hardcore', category: 'q4', createdAt: Date.now(), completed: false },
+    // Task 4: Workout (Q2)
+    { id: '4', title: t('initial.task.workout'), translationKey: 'initial.task.workout', category: 'q2', createdAt: Date.now(), completed: false, duration: '45m' },
+    // Task 5: Read (Q2)
+    { id: '5', title: t('initial.task.read'), translationKey: 'initial.task.read', category: 'q2', createdAt: Date.now(), completed: false, duration: '15m' },
   ];
 
   const initialHabits: Habit[] = [
-      { id: 'h1', title: t('initial.habit.1.title'), color: 'bg-indigo-500', icon: 'Droplet', createdAt: Date.now(), completedDates: [], streak: 0, frequency: '1d' },
-      { id: 'h2', title: t('initial.habit.2.title'), color: 'bg-blue-400', icon: 'Book', createdAt: Date.now(), completedDates: [], streak: 0, frequency: '1d' },
+      { id: 'h1', title: t('initial.habit.water'), translationKey: 'initial.habit.water', color: 'bg-indigo-500', icon: 'Droplet', createdAt: Date.now(), completedDates: [], streak: 0, frequency: '1d' },
+      { id: 'h2', title: t('initial.habit.read'), translationKey: 'initial.habit.read', color: 'bg-blue-400', icon: 'Book', createdAt: Date.now(), completedDates: [], streak: 0, frequency: '1d' },
   ];
 
-  const [tasks, setTasks] = useLocalStorage<Task[]>('focus-matrix-tasks', initialTasks);
-  const [habits, setHabits] = useLocalStorage<Habit[]>('focus-matrix-habits', initialHabits);
+  // Using v3 keys to force a reset for updated concise content
+  const [tasks, setTasks] = useLocalStorage<Task[]>('focus-matrix-tasks-v3', initialTasks);
+  const [habits, setHabits] = useLocalStorage<Habit[]>('focus-matrix-habits-v3', initialHabits);
   const [hardcoreMode, setHardcoreMode] = useLocalStorage<boolean>('focus-matrix-hardcore', false);
   const [aiMode, setAiMode] = useLocalStorage<boolean>('focus-matrix-ai', false);
 
@@ -176,7 +177,6 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (newDates.includes(todayStr)) currentStreak = 1;
           while(true) {
              checkDate.setDate(checkDate.getDate() - 1);
-             // CRITICAL FIX: Use local date formatting, NOT ISOString
              const y = checkDate.getFullYear();
              const m = String(checkDate.getMonth() + 1).padStart(2, '0');
              const dStr = String(checkDate.getDate()).padStart(2, '0');

@@ -34,7 +34,7 @@ const getLocalDateString = (d = new Date()) => {
   return `${year}-${month}-${day}`;
 };
 
-const HabitCard = forwardRef<HTMLDivElement, { habit: Habit; onComplete: (id: string) => void; onDelete: (id: string) => void }>(({ habit, onComplete, onDelete }, ref) => {
+const HabitCard = forwardRef<HTMLDivElement, { habit: Habit; onComplete: (id: string) => void; onDelete: (id: string) => void; t: (key: string) => string; }>(({ habit, onComplete, onDelete, t }, ref) => {
   const x = useMotionValue(0);
   const controls = useAnimation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -84,6 +84,8 @@ const HabitCard = forwardRef<HTMLDivElement, { habit: Habit; onComplete: (id: st
       }
     }
   };
+
+  const displayTitle = habit.translationKey ? t(habit.translationKey) : habit.title;
 
   return (
     <motion.div
@@ -139,7 +141,7 @@ const HabitCard = forwardRef<HTMLDivElement, { habit: Habit; onComplete: (id: st
                 <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">DAILY</span>
                 {habit.streak > 0 && <span className="text-[9px] font-black text-orange-500">🔥 {habit.streak}</span>}
              </div>
-             <h3 className="text-[15px] font-bold text-gray-900 truncate">{habit.title}</h3>
+             <h3 className="text-[15px] font-bold text-gray-900 truncate">{displayTitle}</h3>
              <p className="text-[11px] font-medium text-gray-400 mt-0.5 flex items-center gap-1"><Repeat size={10} />每 {habit.frequency === '1d' ? '天' : habit.frequency} 一次</p>
           </div>
           <motion.div 
@@ -163,14 +165,14 @@ const HabitCard = forwardRef<HTMLDivElement, { habit: Habit; onComplete: (id: st
 
 HabitCard.displayName = 'HabitCard';
 
-const CompletedItem: React.FC<{ habit: Habit }> = ({ habit }) => (
+const CompletedItem: React.FC<{ habit: Habit; t: (key: string) => string; }> = ({ habit, t }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.95 }}
     animate={{ opacity: 1, scale: 1 }}
     className="flex items-center gap-3 py-3 px-4 bg-white/60 border border-gray-50 rounded-xl mb-2"
   >
     <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-    <span className="text-sm text-gray-400 font-medium line-through decoration-gray-200">{habit.title}</span>
+    <span className="text-sm text-gray-400 font-medium line-through decoration-gray-200">{habit.translationKey ? t(habit.translationKey) : habit.title}</span>
   </motion.div>
 );
 
@@ -201,6 +203,7 @@ export const HabitView: React.FC = () => {
                         habit={habit} 
                         onComplete={handleComplete} 
                         onDelete={handleDelete}
+                        t={t}
                     />
                 ))}
              </AnimatePresence>
@@ -214,7 +217,7 @@ export const HabitView: React.FC = () => {
       {completedHabits.length > 0 && (
           <footer className="px-6 pb-28 pt-4 border-t border-gray-100 bg-white/40 backdrop-blur-md">
               <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">今日已完成</h4>
-              {completedHabits.map(habit => <CompletedItem key={habit.id} habit={habit} />)}
+              {completedHabits.map(habit => <CompletedItem key={habit.id} habit={habit} t={t} />)}
           </footer>
       )}
     </div>

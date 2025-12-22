@@ -15,7 +15,8 @@ const DraggableTaskItem: React.FC<{
   onClick: (task: Task) => void;
   onComplete: (id: string) => void;
   isDragging?: boolean;
-}> = ({ task, onDragStart, onClick, onComplete, isDragging }) => {
+  t: (key: string) => string;
+}> = ({ task, onDragStart, onClick, onComplete, isDragging, t }) => {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startPos = useRef<{ x: number; y: number } | null>(null);
 
@@ -47,6 +48,9 @@ const DraggableTaskItem: React.FC<{
     startPos.current = null;
   };
 
+  // Dynamic localization
+  const displayTitle = task.translationKey ? t(task.translationKey) : task.title;
+
   return (
     <div
       onPointerDown={handlePointerDown}
@@ -66,7 +70,7 @@ const DraggableTaskItem: React.FC<{
       >
           <div className="w-4 h-4 rounded border-[1.5px] border-gray-200 bg-gray-50 flex items-center justify-center shrink-0 hover:border-green-400 hover:bg-green-50 transition-colors pointer-events-none"></div>
       </div>
-      <span className="text-[12px] text-gray-800 font-medium truncate tracking-tight select-none leading-snug">{task.title}</span>
+      <span className="text-[12px] text-gray-800 font-medium truncate tracking-tight select-none leading-snug">{displayTitle}</span>
     </div>
   );
 };
@@ -86,7 +90,8 @@ const Quadrant: React.FC<{
   emptyText: string;
   dropTarget: { zone: QuadrantId; index: number } | null;
   draggedTaskId?: string;
-}> = ({ id, title, subtitle, icon, colorClass, bgClass, tasks, highlighted, onComplete, onDragStart, onClickTask, emptyText, dropTarget, draggedTaskId }) => {
+  t: (key: string) => string;
+}> = ({ id, title, subtitle, icon, colorClass, bgClass, tasks, highlighted, onComplete, onDragStart, onClickTask, emptyText, dropTarget, draggedTaskId, t }) => {
   return (
     <div
       data-zone-id={id}
@@ -119,6 +124,7 @@ const Quadrant: React.FC<{
                 onClick={onClickTask}
                 onComplete={onComplete}
                 isDragging={draggedTaskId === task.id}
+                t={t}
              />
           </React.Fragment>
         ))}
@@ -212,6 +218,7 @@ export const MatrixView: React.FC = () => {
               emptyText={id === 'q2' ? t('matrix.q2.empty') : t('matrix.empty')}
               dropTarget={dropTarget}
               draggedTaskId={dragItem?.task.id}
+              t={t}
             />
         ))}
       </div>
@@ -241,7 +248,7 @@ export const MatrixView: React.FC = () => {
                 <div key={task.id} onPointerDown={(e) => handleDragStart(task, e.clientX, e.clientY, e.currentTarget as HTMLElement)} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative active:scale-95 transition-transform touch-none select-none cursor-grab active:cursor-grabbing">
                   <div className="flex items-center gap-3 pointer-events-none">
                     <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-                    <span className="text-sm font-bold text-gray-700">{task.title}</span>
+                    <span className="text-sm font-bold text-gray-700">{task.translationKey ? t(task.translationKey) : task.title}</span>
                   </div>
                 </div>
              ))
@@ -257,7 +264,7 @@ export const MatrixView: React.FC = () => {
         <div className="fixed z-[100] pointer-events-none bg-white p-3 rounded-lg shadow-2xl border border-gray-200 opacity-90 w-[240px]" style={{ left: dragItem.x - dragItem.offsetX, top: dragItem.y - dragItem.offsetY, transform: 'scale(1.05) rotate(2deg)' }}>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-            <span className="text-xs font-bold text-gray-700">{dragItem.task.title}</span>
+            <span className="text-xs font-bold text-gray-700">{dragItem.task.translationKey ? t(dragItem.task.translationKey) : dragItem.task.title}</span>
           </div>
         </div>,
         document.body

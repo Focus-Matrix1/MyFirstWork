@@ -16,10 +16,10 @@ const UNITS = ['m', 'h', 'd', 's'];
 
 export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose, onUpdate, onDelete, t }) => {
   const { hardcoreMode } = useTasks();
-  const [title, setTitle] = useState(task?.title || '');
-  const [description, setDescription] = useState(task?.description || '');
-  const [category, setCategory] = useState<CategoryId>(task?.category || 'q1');
-  const [plannedDate, setPlannedDate] = useState(task?.plannedDate || '');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState<CategoryId>('q1');
+  const [plannedDate, setPlannedDate] = useState('');
   
   // Duration Logic
   const [durationVal, setDurationVal] = useState('');
@@ -37,7 +37,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose,
   // Parse initial duration string (e.g. "30m" -> val:30, unit:m)
   useEffect(() => {
     if (task) {
-      setTitle(task.title);
+      // Use localized title if key exists, otherwise raw title
+      setTitle(task.translationKey ? t(task.translationKey) : task.title);
       setDescription(task.description || '');
       setCategory(task.category === 'inbox' ? 'q1' : task.category);
       setPlannedDate(task.plannedDate || '');
@@ -54,7 +55,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose,
           setDurationVal('');
       }
     }
-  }, [task]);
+  }, [task, t]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -82,13 +83,24 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose,
       
       const finalDuration = currentVal.trim() ? `${currentVal}${currentUnit}` : undefined;
 
-      onUpdate(task.id, {
-          title: overrides?.title ?? title,
+      // Logic to break localization if title changed
+      const currentDisplayedTitle = task.translationKey ? t(task.translationKey) : task.title;
+      const newTitle = overrides?.title ?? title;
+      
+      const updates: Partial<Task> = {
+          title: newTitle,
           description: overrides?.description ?? description,
           category: overrides?.category ?? category,
           plannedDate: overrides?.plannedDate ?? plannedDate,
           duration: finalDuration
-      });
+      };
+
+      // If user edited the localized title, clear the translationKey so the edit persists as static text
+      if (newTitle !== currentDisplayedTitle) {
+          updates.translationKey = undefined;
+      }
+
+      onUpdate(task.id, updates);
   };
 
   const handleUnitToggle = () => {

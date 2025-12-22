@@ -12,6 +12,7 @@ export interface Task {
   completedAt?: number; // Timestamp when task was completed
   plannedDate?: string; // Format: YYYY-MM-DD
   duration?: string; // e.g. "30m", "1h"
+  translationKey?: string; // Key for dynamic localization of demo tasks
 }
 
 export interface Habit {
@@ -23,6 +24,7 @@ export interface Habit {
   completedDates: string[]; // Array of YYYY-MM-DD strings
   streak: number;
   frequency: string; // e.g., "1d", "12h"
+  translationKey?: string; // Key for dynamic localization of demo habits
 }
 
 export type ViewState = 'matrix' | 'list' | 'habits' | 'profile';

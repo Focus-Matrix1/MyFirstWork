@@ -113,14 +113,15 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.switch.signup': 'No account? Sign Up',
     'auth.error': 'Authentication failed. Please check credentials.',
 
-    // Initial Data - Educational Onboarding
-    'initial.task.1.title': 'Hold & drag me to "Urgent & Important" (Red)',
-    'initial.task.2.title': 'Swipe me LEFT to delete 👈',
-    'initial.task.3.title': 'Check "Profile" to enable Hardcore Mode 🛡️',
-    'initial.task.4.title': 'Tap + to add a new task',
-    'initial.task.5.title': 'Drag tasks between quadrants to prioritize',
-    'initial.habit.1.title': 'Drink Water',
-    'initial.habit.2.title': 'Read 10 Pages',
+    // Initial Data - Concise & Educational
+    'initial.task.drag': 'Hold & Drag to Q1 (Red)',
+    'initial.task.swipe': 'Swipe Left to Delete 👈',
+    'initial.task.hardcore': 'Try Hardcore Mode 🛡️',
+    'initial.task.workout': 'Plan Workout 💪',
+    'initial.task.read': 'Read 15 Mins 📖',
+    
+    'initial.habit.water': 'Drink Water',
+    'initial.habit.read': 'Read 10 Pages',
   },
   zh: {
     'matrix.title': '专注矩阵',
@@ -223,14 +224,15 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.switch.signup': '没有账号？去注册',
     'auth.error': '认证失败，请检查账号密码。',
 
-    // Initial Data - Educational Onboarding
-    'initial.task.1.title': '长按并将我拖入“重要且紧急”（红色）',
-    'initial.task.2.title': '👈 试着向左滑动删除我',
-    'initial.task.3.title': '去“个人中心”开启硬核模式 🛡️',
-    'initial.task.4.title': '点击 + 号添加新任务',
-    'initial.task.5.title': '拖动任务在不同象限间流转',
-    'initial.habit.1.title': '喝水',
-    'initial.habit.2.title': '阅读 10 页',
+    // Initial Data - Concise & Educational
+    'initial.task.drag': '长按拖入 Q1 (红色)',
+    'initial.task.swipe': '👈 向左滑动删除',
+    'initial.task.hardcore': '体验硬核模式 🛡️',
+    'initial.task.workout': '制定健身计划 💪',
+    'initial.task.read': '阅读 15 分钟 📖',
+
+    'initial.habit.water': '喝水',
+    'initial.habit.read': '阅读 10 页',
   }
 };
 
