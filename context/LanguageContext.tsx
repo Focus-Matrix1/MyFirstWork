@@ -47,6 +47,7 @@ const translations: Record<Language, Record<string, string>> = {
     'detail.created': 'Created',
     'detail.category': 'Category',
     'detail.date': 'Planned Completion Date',
+    'detail.duration': 'Duration',
     'detail.hardcore_locked': 'Hardcore Mode: Editing Disabled',
 
     'habits.title': 'Habits',
@@ -158,6 +159,7 @@ const translations: Record<Language, Record<string, string>> = {
     'detail.created': '创建时间',
     'detail.category': '所属分类',
     'detail.date': '计划完成日期',
+    'detail.duration': '持续时间',
     'detail.hardcore_locked': '硬核模式：禁止编辑',
 
     'habits.title': '习惯追踪',

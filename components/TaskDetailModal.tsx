@@ -173,7 +173,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose,
                 <div className="grid grid-cols-2 gap-4">
                     {/* Date Input (Auto-save on Change) */}
                     <div>
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block px-1">{t('detail.date')}</label>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1 min-h-[32px] flex items-end">
+                            {t('detail.date')}
+                        </label>
                         <input 
                             type="date"
                             disabled={hardcoreMode}
@@ -188,7 +190,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose,
                     
                     {/* Duration Input (Number Left, Unit Right) */}
                      <div>
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block px-1">Duration</label>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1 min-h-[32px] flex items-end">
+                            {t('detail.duration')}
+                        </label>
                         <div className={`flex items-center bg-gray-50 border border-gray-100 rounded-xl overflow-hidden transition-colors ${!hardcoreMode && 'focus-within:border-gray-300'}`}>
                             <input 
                                 type="number"
