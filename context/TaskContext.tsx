@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Task, CategoryId, Habit } from '../types';
 import { useSound } from '../hooks/useSound';
@@ -6,7 +5,11 @@ import { useTaskClassifier } from '../hooks/useTaskClassifier';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useLanguage } from './LanguageContext';
 import { INTERACTION } from '../constants';
-import { GEMINI_API_KEY } from '../config';
+
+export interface AiFeedback {
+    message: string;
+    type: 'success' | 'neutral';
+}
 
 interface TaskContextType {
   tasks: Task[];
@@ -35,6 +38,9 @@ interface TaskContextType {
   aiMode: boolean;
   setAiMode: (enabled: boolean) => void;
   isApiKeyMissing: boolean;
+  
+  aiFeedback: AiFeedback | null;
+  clearAiFeedback: () => void;
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -77,9 +83,14 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [selectedDate, setSelectedDate] = useState<string>(getTodayString());
   const [inboxShakeTrigger, setInboxShakeTrigger] = useState(0);
   const [addSuccessTrigger, setAddSuccessTrigger] = useState(0);
+  
+  // New state for AI feedback
+  const [aiFeedback, setAiFeedback] = useState<AiFeedback | null>(null);
 
   const { playSuccessSound } = useSound();
   const { classifyTaskWithAI } = useTaskClassifier();
+  
+  const clearAiFeedback = () => setAiFeedback(null);
 
   const addTask = async (title: string, category: CategoryId = 'inbox', date?: string, description?: string, duration?: string) => {
     const tempId = Math.random().toString(36).substr(2, 9);
@@ -89,14 +100,34 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAddSuccessTrigger(prev => prev + 1);
 
     // Use centralized key check
-    if (aiMode && category === 'inbox' && GEMINI_API_KEY) {
+    if (aiMode && category === 'inbox' && process.env.API_KEY) {
         try {
             const aiResult = await classifyTaskWithAI(title, description);
+            
             if (aiResult.category !== 'inbox') {
-                updateTask(tempId, { category: aiResult.category, duration: duration || aiResult.duration });
+                const finalDuration = duration || aiResult.duration;
+                updateTask(tempId, { category: aiResult.category, duration: finalDuration });
                 if (navigator.vibrate) navigator.vibrate(INTERACTION.VIBRATION.AI_AUTO_SORT);
+                
+                // Success Feedback
+                const durationText = finalDuration ? ` (${finalDuration})` : '';
+                setAiFeedback({
+                    message: `${t('ai.sorted')} ${aiResult.category.toUpperCase()}${durationText}`,
+                    type: 'success'
+                });
+            } else {
+                // Failure/Unsure Feedback
+                setAiFeedback({
+                    message: t('ai.unsure'),
+                    type: 'neutral'
+                });
             }
-        } catch (e) { console.warn("AI Auto-sort failed", e); }
+            // Auto hide
+            setTimeout(() => setAiFeedback(null), 3500);
+            
+        } catch (e) { 
+            console.warn("AI Auto-sort failed", e); 
+        }
     }
   };
 
@@ -204,7 +235,8 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       selectedDate, setSelectedDate,
       inboxShakeTrigger, addSuccessTrigger,
       aiMode, setAiMode,
-      isApiKeyMissing: !GEMINI_API_KEY
+      isApiKeyMissing: !process.env.API_KEY,
+      aiFeedback, clearAiFeedback
     }}>
       {children}
     </TaskContext.Provider>

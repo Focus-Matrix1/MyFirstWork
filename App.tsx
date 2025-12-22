@@ -1,11 +1,11 @@
-import React, { useState, useEffect, ReactNode, ErrorInfo } from 'react';
+import React, { Component, useState, useEffect, ReactNode, ErrorInfo } from 'react';
 import { TaskProvider, useTasks } from './context/TaskContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { MatrixView } from './components/MatrixView';
 import { ListView } from './components/ListView';
 import { HabitView } from './components/StatsView';
 import { ProfileView } from './components/UserView';
-import { LayoutGrid, ListTodo, User, Plus, Check, AlertTriangle, Repeat } from 'lucide-react';
+import { LayoutGrid, ListTodo, User, Plus, Check, AlertTriangle, Repeat, Sparkles, HelpCircle, X } from 'lucide-react';
 import { ViewState } from './types';
 import { AddModal } from './components/AddModal';
 import { INTERACTION, ANIMATION_DURATIONS } from './constants';
@@ -23,7 +23,7 @@ interface ErrorBoundaryState {
 /**
  * ErrorBoundary class component fixed to correctly inherit from Component with typed props and state.
  */
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
@@ -79,6 +79,38 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
+// --- AI Feedback Toast ---
+const AiFeedbackToast = () => {
+    const { aiFeedback, clearAiFeedback } = useTasks();
+
+    if (!aiFeedback) return null;
+
+    const isSuccess = aiFeedback.type === 'success';
+    
+    return (
+        <div 
+            onClick={clearAiFeedback}
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] animate-fade-in flex justify-center w-full max-w-[90%]"
+        >
+            <div className={`bg-white/95 backdrop-blur-md border border-white/40 shadow-xl rounded-full pl-3 pr-4 py-2 relative overflow-hidden flex items-center gap-3 cursor-pointer ${
+                isSuccess ? 'shadow-purple-500/10' : 'shadow-gray-500/10'
+            }`}>
+                 <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
+                     isSuccess ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-500'
+                 }`}>
+                     {isSuccess ? <Sparkles className="w-3.5 h-3.5" /> : <HelpCircle className="w-3.5 h-3.5" />}
+                 </div>
+                 <div className="text-xs font-bold text-gray-800 leading-none whitespace-nowrap">
+                     {aiFeedback.message}
+                 </div>
+                 <button className="text-gray-400 hover:text-gray-600 ml-1">
+                     <X className="w-3.5 h-3.5" />
+                 </button>
+            </div>
+        </div>
+    );
+};
+
 // --- Main App Content ---
 
 const AppContent: React.FC = () => {
@@ -106,52 +138,63 @@ const AppContent: React.FC = () => {
   );
 
   return (
-    <div className="w-full h-[100dvh] flex flex-col bg-[#F5F7FA] overflow-hidden text-gray-900 relative">
-        
-        {/* Main Content Area */}
-        <div className="flex-1 overflow-hidden relative">
-            <div className={`w-full h-full transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'matrix' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
-                <MatrixView />
-            </div>
-            <div className={`w-full h-full transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'list' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
-                <ListView />
-            </div>
-             <div className={`w-full h-full transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'habits' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
-                <HabitView />
-            </div>
-            <div className={`w-full h-full transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'profile' ? 'opacity-100 z-10' : 'opacity-0 hidden'}`}>
-                <ProfileView />
-            </div>
-        </div>
-
-        {/* Bottom Navigation */}
-        <div className="bg-white/95 backdrop-blur-xl flex justify-around items-start pt-4 px-4 pb-[calc(16px+env(safe-area-inset-bottom))] z-50 absolute bottom-0 left-0 right-0 border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
-            <NavButton view="matrix" icon={LayoutGrid} />
-            <NavButton view="list" icon={ListTodo} />
+    // Desktop Container Wrapper
+    <div className="w-full h-[100dvh] bg-[#F5F7FA] sm:bg-[#121212] sm:flex sm:items-center sm:justify-center overflow-hidden">
+        {/* Mobile Device Simulation Container */}
+        <div 
+            className="w-full h-full sm:w-[430px] sm:h-[92vh] sm:max-h-[932px] sm:rounded-[44px] bg-[#F5F7FA] sm:shadow-[0_0_0_12px_#1c1c1e,0_0_0_14px_#3a3a3c,0_40px_80px_-15px_rgba(0,0,0,0.8)] overflow-hidden text-gray-900 relative flex flex-col transition-all duration-300 transform-gpu"
+            style={{ 
+                // Creating a containing block for fixed position children
+                transform: 'translate3d(0, 0, 0)' 
+            }}
+        >
+            <AiFeedbackToast />
             
-            {/* Add Button with Success Animation */}
-            <button 
-                onClick={() => setAddModalOpen(true)}
-                className="relative -top-8 group"
-            >
-                <div 
-                    className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-xl shadow-black/20 transition-all duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} border-[4px] border-white ring-1 ring-gray-100 ${
-                        isSuccessAnim ? 'bg-green-500 scale-110 rotate-12' : 'bg-black group-hover:scale-105 group-active:scale-95'
-                    }`}
-                >
-                    {isSuccessAnim ? (
-                        <Check className="w-8 h-8 stroke-[3]" />
-                    ) : (
-                        <Plus className="w-8 h-8 stroke-[3]" />
-                    )}
+            {/* Main Content Area */}
+            <div className="flex-1 overflow-hidden relative z-0">
+                <div className={`w-full h-full absolute inset-0 transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'matrix' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}>
+                    <MatrixView />
                 </div>
-            </button>
+                <div className={`w-full h-full absolute inset-0 transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'list' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}>
+                    <ListView />
+                </div>
+                 <div className={`w-full h-full absolute inset-0 transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'habits' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}>
+                    <HabitView />
+                </div>
+                <div className={`w-full h-full absolute inset-0 transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'profile' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}>
+                    <ProfileView />
+                </div>
+            </div>
 
-            <NavButton view="habits" icon={Repeat} />
-            <NavButton view="profile" icon={User} />
+            {/* Bottom Navigation */}
+            <div className="bg-white/95 backdrop-blur-xl flex justify-around items-start pt-4 px-4 pb-[calc(16px+env(safe-area-inset-bottom))] z-50 absolute bottom-0 left-0 right-0 border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+                <NavButton view="matrix" icon={LayoutGrid} />
+                <NavButton view="list" icon={ListTodo} />
+                
+                {/* Add Button with Success Animation */}
+                <button 
+                    onClick={() => setAddModalOpen(true)}
+                    className="relative -top-8 group"
+                >
+                    <div 
+                        className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-xl shadow-black/20 transition-all duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} border-[4px] border-white ring-1 ring-gray-100 ${
+                            isSuccessAnim ? 'bg-green-500 scale-110 rotate-12' : 'bg-black group-hover:scale-105 group-active:scale-95'
+                        }`}
+                    >
+                        {isSuccessAnim ? (
+                            <Check className="w-8 h-8 stroke-[3]" />
+                        ) : (
+                            <Plus className="w-8 h-8 stroke-[3]" />
+                        )}
+                    </div>
+                </button>
+
+                <NavButton view="habits" icon={Repeat} />
+                <NavButton view="profile" icon={User} />
+            </div>
+
+            <AddModal isOpen={isAddModalOpen} onClose={() => setAddModalOpen(false)} />
         </div>
-
-        <AddModal isOpen={isAddModalOpen} onClose={() => setAddModalOpen(false)} />
     </div>
   );
 };

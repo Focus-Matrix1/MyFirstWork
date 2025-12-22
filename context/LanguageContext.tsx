@@ -114,6 +114,9 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.switch.signup': 'No account? Sign Up',
     'auth.error': 'Authentication failed. Please check credentials.',
 
+    'ai.sorted': 'Auto-sorted to',
+    'ai.unsure': 'Insufficient info to classify',
+
     // Initial Data - Concise & Educational
     'initial.task.drag': 'Hold & Drag to Q1 (Red)',
     'initial.task.swipe': 'Swipe Left to Delete 👈',
@@ -225,6 +228,9 @@ const translations: Record<Language, Record<string, string>> = {
     'auth.switch.login': '已有账号？去登录',
     'auth.switch.signup': '没有账号？去注册',
     'auth.error': '认证失败，请检查账号密码。',
+
+    'ai.sorted': '已自动归类至',
+    'ai.unsure': '信息不足无法分类',
 
     // Initial Data - Concise & Educational
     'initial.task.drag': '长按拖入 Q1 (红色)',
