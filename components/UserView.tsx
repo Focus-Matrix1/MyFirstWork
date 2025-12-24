@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useTasks } from '../context/TaskContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -242,7 +241,7 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         // Changed to Bottom Sheet style for consistency within Phone Container
         // Updated background to gray-500/30
         <div className="fixed inset-0 z-[110] bg-gray-500/30 backdrop-blur-sm flex items-end justify-center" onClick={onClose}>
-            <div className="bg-white w-full rounded-t-[32px] p-6 shadow-2xl slide-up h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="bg-white w-full rounded-t-[32px] p-6 shadow-2xl slide-up h-[85vh] overflow-y-auto no-scrollbar" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-bold text-gray-900">{t('profile.settings')}</h3>
                     <button onClick={onClose} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"><X className="w-5 h-5 text-gray-500" /></button>
@@ -353,7 +352,11 @@ export const ProfileView: React.FC = () => {
 
   return (
     <div className="w-full h-full flex flex-col bg-[#F2F4F7] relative">
-      <div className="px-6 pt-10 pb-6 shrink-0 flex items-center justify-between">
+      <div 
+        className="px-6 pb-6 shrink-0 flex items-center justify-between"
+        // Reduced to 20px
+        style={{ paddingTop: 'calc(20px + env(safe-area-inset-top) + var(--sa-top, 0px))' }}
+      >
         <div className="flex items-center gap-4">
              <div className="w-14 h-14 rounded-full bg-gray-900 flex items-center justify-center text-white shadow-lg border-4 border-white"><User className="w-6 h-6" /></div>
              <div><h1 className="text-xl font-bold text-gray-900">{displayPhone}</h1><span className="text-[11px] px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-600 border-indigo-100 font-bold">{user ? 'Pro' : t('user.tier')}</span></div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useTasks } from '../context/TaskContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -75,11 +74,11 @@ export const AddModal: React.FC<AddModalProps> = ({ isOpen, onClose }) => {
   return (
     // Updated background to bg-black/20 for lighter gray appearance
     <div 
-        className="fixed inset-0 z-[80] bg-black/20 backdrop-blur-sm flex items-end animate-fade-in"
+        className="fixed inset-0 z-[80] bg-black/20 backdrop-blur-sm flex items-end justify-center animate-fade-in"
         onClick={onClose}
     >
         <div 
-            className="w-full bg-white rounded-t-[32px] p-6 pb-8 shadow-2xl slide-up"
+            className="w-full max-w-lg mx-auto bg-white rounded-t-[32px] p-6 pb-8 shadow-2xl slide-up"
             onClick={(e) => e.stopPropagation()}
         >
             <div className="flex justify-between items-center mb-4">

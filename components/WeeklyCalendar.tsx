@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useTasks } from '../context/TaskContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -49,6 +48,7 @@ export const WeeklyCalendar: React.FC = () => {
   const startX = useRef(0);
   const isDragging = useRef(false);
 
+  // Touch Handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX;
     isDragging.current = true;
@@ -58,8 +58,28 @@ export const WeeklyCalendar: React.FC = () => {
     if (!isDragging.current) return;
     isDragging.current = false;
     const endX = e.changedTouches[0].clientX;
-    const diff = endX - startX.current;
+    handleSwipeEnd(endX);
+  };
 
+  // Mouse Handlers for Desktop
+  const handleMouseDown = (e: React.MouseEvent) => {
+    startX.current = e.clientX;
+    isDragging.current = true;
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    handleSwipeEnd(e.clientX);
+  };
+
+  const handleMouseLeave = () => {
+    isDragging.current = false;
+  };
+
+  // Unified Swipe Logic
+  const handleSwipeEnd = (endX: number) => {
+    const diff = endX - startX.current;
     if (Math.abs(diff) > 50) {
         changeWeek(diff > 0 ? 'prev' : 'next');
     }
@@ -68,16 +88,23 @@ export const WeeklyCalendar: React.FC = () => {
   const weekTitle = weekStart.toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', { month: 'long', year: 'numeric' });
 
   return (
-    <div className="bg-white pb-4 pt-2 px-2 select-none">
+    <div 
+        className="bg-white pb-4 px-2 select-none"
+        // Reduced to 8px
+        style={{ paddingTop: 'calc(8px + env(safe-area-inset-top) + var(--sa-top, 0px))' }}
+    >
         <div className="flex justify-between items-center mb-4 px-4 max-w-[375px] mx-auto">
              <h2 className="text-sm font-bold text-gray-900">{weekTitle}</h2>
         </div>
         
         <div 
             ref={calendarRef}
-            className="flex justify-between items-center px-2 touch-pan-y max-w-[375px] mx-auto"
+            className="flex justify-between items-center px-2 touch-pan-y max-w-[375px] mx-auto cursor-grab active:cursor-grabbing"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
         >
             {days.map((date, index) => {
                 const selected = isSelected(date);

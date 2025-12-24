@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Inbox, ChevronLeft, Zap, Calendar, Users, Coffee, AlignLeft } from 'lucide-react';
@@ -183,7 +182,11 @@ export const MatrixView: React.FC = () => {
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden relative bg-[#F5F7FA]">
-      <div className="px-6 pt-6 pb-4 z-40 relative shrink-0 flex justify-between items-end">
+      <div 
+        className="px-6 pb-4 z-40 relative shrink-0 flex justify-between items-end"
+        // Reduced extra padding to 12px
+        style={{ paddingTop: 'calc(12px + env(safe-area-inset-top) + var(--sa-top, 0px))' }}
+      >
         <div className="flex flex-col items-start select-none">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1 font-['Inter']">{today}</h2>
           <h1 className="text-[34px] font-bold text-gray-900 leading-none tracking-tight">{t('matrix.title')}</h1>
@@ -199,7 +202,7 @@ export const MatrixView: React.FC = () => {
         </button>
       </div>
 
-      <div className={`flex-1 mx-4 mb-[calc(${LAYOUT.BOTTOM_NAV_RESERVE_PX}px+env(safe-area-inset-bottom))] bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden grid grid-cols-2 grid-rows-2 gap-px border border-gray-100 relative select-none`}>
+      <div className={`flex-1 mx-4 mb-[90px] bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden grid grid-cols-2 grid-rows-2 gap-px border border-gray-100 relative select-none`}>
          <div className="absolute inset-0 bg-gray-100 pointer-events-none"></div>
         {(['q1', 'q2', 'q3', 'q4'] as const).map(id => (
             <Quadrant 
@@ -223,14 +226,16 @@ export const MatrixView: React.FC = () => {
         ))}
       </div>
 
-      {/* Updated overlay background to gray-500/30 */}
       <div 
         className={`absolute inset-0 z-[60] bg-gray-500/30 backdrop-blur-sm transition-opacity duration-${ANIMATION_DURATIONS.MODAL_TRANSITION} ${isInboxOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setInboxOpen(false)}
       ></div>
       
       <div className={`absolute top-0 left-0 bottom-0 w-[85%] max-w-[320px] bg-white z-[70] shadow-2xl transition-transform duration-${ANIMATION_DURATIONS.MODAL_TRANSITION} flex flex-col rounded-r-[32px] ${isInboxOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="px-6 pt-12 pb-4 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center shrink-0">
+        <div 
+          className="px-6 pb-4 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center shrink-0"
+          style={{ paddingTop: 'calc(48px + env(safe-area-inset-top) + var(--sa-top, 0px))' }}
+        >
           <div>
              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                <Inbox className="w-5 h-5 text-gray-900" /> {t('matrix.inbox')}
@@ -241,7 +246,7 @@ export const MatrixView: React.FC = () => {
             <ChevronLeft className="w-5 h-5 text-gray-500" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar">
           {inboxTasks.length === 0 ? (
              <div className="text-center mt-10 text-gray-300 text-sm">{t('matrix.inbox.zero')}</div>
           ) : (

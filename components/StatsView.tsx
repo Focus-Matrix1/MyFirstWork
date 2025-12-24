@@ -1,4 +1,3 @@
-
 import React, { useState, forwardRef, useEffect } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence, useAnimation, PanInfo } from 'framer-motion';
 import { Check, Coffee, BookOpen, Dumbbell, Droplets, Repeat, Zap, Sparkles, Wind, Trash2 } from 'lucide-react';
@@ -195,7 +194,11 @@ export const HabitView: React.FC = () => {
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden relative bg-[#F5F7FA]">
-      <div className="px-6 pt-10 pb-4 shrink-0">
+      <div 
+        className="px-6 pb-4 shrink-0"
+        // Reduced to 20px
+        style={{ paddingTop: 'calc(20px + env(safe-area-inset-top) + var(--sa-top, 0px))' }}
+      >
         <h2 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1">{todayLabel}</h2>
         <h1 className="text-3xl font-black text-gray-900 tracking-tight">{t('habits.title')}</h1>
       </div>

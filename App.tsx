@@ -1,11 +1,11 @@
-import React, { useState, useEffect, ReactNode, ErrorInfo, Component } from 'react';
+import React, { useState, useEffect, ReactNode, ErrorInfo } from 'react';
 import { TaskProvider, useTasks } from './context/TaskContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { MatrixView } from './components/MatrixView';
 import { ListView } from './components/ListView';
 import { HabitView } from './components/StatsView';
 import { ProfileView } from './components/UserView';
-import { LayoutGrid, ListTodo, User, Plus, Check, AlertTriangle, Repeat, Sparkles, HelpCircle, X } from 'lucide-react';
+import { LayoutGrid, ListTodo, User, Plus, Check, AlertTriangle, Repeat, Sparkles, HelpCircle, X, Wifi } from 'lucide-react';
 import { ViewState } from './types';
 import { AddModal } from './components/AddModal';
 import { INTERACTION, ANIMATION_DURATIONS } from './constants';
@@ -20,14 +20,14 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-/**
- * ErrorBoundary class component fixed to correctly inherit from Component with typed props and state.
- */
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  public state: ErrorBoundaryState = {
-    hasError: false,
-    error: null
-  };
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null
+    };
+  }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
@@ -76,18 +76,143 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 }
 
+// --- High Fidelity Phone Frame ---
+const PhoneFrame: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const [isDesktop, setIsDesktop] = useState(false);
+
+    useEffect(() => {
+        const check = () => setIsDesktop(window.innerWidth > 768);
+        check();
+        window.addEventListener('resize', check);
+        return () => window.removeEventListener('resize', check);
+    }, []);
+
+    if (!isDesktop) {
+        return (
+            <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-[#F5F7FA]">
+                {children}
+            </div>
+        );
+    }
+
+    // iPhone 15 Pro Titanium Simulation
+    // Using complex gradients and shadows to simulate the brushed metal and bezel depth
+    return (
+        <div className="min-h-screen w-full bg-[#d0d3d8] flex items-center justify-center p-8 overflow-y-auto font-sans">
+            <div className="relative shrink-0 my-auto scale-100 transition-transform">
+                
+                {/* 1. Outer Shadow (Environment Reflection) */}
+                <div className="rounded-[60px] shadow-[0_30px_60px_-10px_rgba(0,0,0,0.5),0_10px_30px_-15px_rgba(0,0,0,0.3)]">
+                    
+                    {/* 2. Titanium Frame Body */}
+                    <div className="
+                        relative
+                        bg-gradient-to-br from-[#6b6b6b] via-[#8e8e8e] to-[#606060]
+                        p-[3px]
+                        rounded-[60px]
+                        shadow-[inset_0_0_2px_1px_rgba(255,255,255,0.2)]
+                    ">
+                        {/* Frame Texture/Finish Overlay */}
+                        <div className="
+                            bg-[#222] 
+                            p-[10px] 
+                            rounded-[57px] 
+                            shadow-[inset_0_0_4px_2px_rgba(0,0,0,0.8)]
+                        ">
+                            
+                            {/* Physical Buttons */}
+                            <div className="absolute top-[130px] -left-[4px] w-[3px] h-[26px] bg-[#4a4a4a] rounded-l-md shadow-[inset_-1px_0_1px_rgba(0,0,0,0.5)]"></div>
+                            <div className="absolute top-[180px] -left-[4px] w-[3px] h-[50px] bg-[#4a4a4a] rounded-l-md shadow-[inset_-1px_0_1px_rgba(0,0,0,0.5)]"></div>
+                            <div className="absolute top-[250px] -left-[4px] w-[3px] h-[50px] bg-[#4a4a4a] rounded-l-md shadow-[inset_-1px_0_1px_rgba(0,0,0,0.5)]"></div>
+                            <div className="absolute top-[200px] -right-[4px] w-[3px] h-[80px] bg-[#4a4a4a] rounded-r-md shadow-[inset_1px_0_1px_rgba(0,0,0,0.5)]"></div>
+
+                            {/* 3. Screen Bezel (Black Border) */}
+                            <div 
+                                className="
+                                    relative 
+                                    w-[375px] h-[812px] 
+                                    bg-[#F5F7FA] 
+                                    rounded-[48px] 
+                                    overflow-hidden 
+                                    flex flex-col
+                                    shadow-[0_0_0_2px_#000]
+                                    border border-black
+                                " 
+                                style={{ 
+                                    transform: 'translateZ(0)',
+                                    // Adjusted Safe Area: tighter top (44px), zero bottom
+                                    '--sa-top': '44px', 
+                                    '--sa-bottom': '0px' 
+                                } as React.CSSProperties}
+                            >
+                                
+                                {/* Dynamic Island */}
+                                <div className="absolute top-[11px] left-1/2 -translate-x-1/2 z-[999] pointer-events-none">
+                                    <div className="w-[120px] h-[35px] bg-black rounded-[20px] flex items-center justify-center gap-4 shadow-sm">
+                                        <div className="w-[30%] h-full"></div> {/* Sensors hidden in black */}
+                                        <div className="w-2 h-2 rounded-full bg-[#1a1a1a]/60 ml-auto mr-4"></div> {/* Lens */}
+                                    </div>
+                                </div>
+                                
+                                {/* Status Bar Left */}
+                                <div className="absolute top-[15px] left-[32px] text-black font-semibold text-[14px] z-[900] pointer-events-none tracking-tight">
+                                    9:41
+                                </div>
+
+                                {/* Status Bar Right - Signal, Wifi, Battery */}
+                                <div className="absolute top-[19px] right-[28px] flex items-center gap-1.5 z-[900] pointer-events-none text-black">
+                                     {/* Signal Bars */}
+                                     <div className="flex items-end gap-[1px] h-[10px]">
+                                         <div className="w-[3px] h-[6px] bg-black rounded-[0.5px]"></div>
+                                         <div className="w-[3px] h-[8px] bg-black rounded-[0.5px]"></div>
+                                         <div className="w-[3px] h-[10px] bg-black rounded-[0.5px]"></div>
+                                         <div className="w-[3px] h-[12px] bg-black/30 rounded-[0.5px]"></div>
+                                     </div>
+                                     {/* Wifi Icon */}
+                                     <Wifi className="w-4 h-4 text-black" strokeWidth={2.5} />
+                                     {/* Battery Icon (Fixed Single Element) */}
+                                     <div className="relative w-[22px] h-[10px] mr-0.5">
+                                        <div className="w-full h-full border-[1px] border-black/40 rounded-[3px] p-[1px]">
+                                             <div className="w-full h-full bg-black rounded-[1px]"></div>
+                                        </div>
+                                        {/* Battery Nub */}
+                                        <div className="absolute -right-[2.5px] top-1/2 -translate-y-1/2 w-[1.5px] h-[4px] bg-black/40 rounded-r-[1px]"></div>
+                                     </div>
+                                </div>
+
+                                {/* Content */}
+                                <div className="flex-1 w-full h-full relative">
+                                    {children}
+                                </div>
+
+                                {/* Home Indicator - Floating */}
+                                <div className="absolute bottom-[8px] left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-black/80 rounded-full z-[999] pointer-events-none backdrop-blur-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="text-center mt-6 text-gray-500 text-[10px] font-bold tracking-[0.2em] uppercase opacity-50">
+                    iPhone 15 Pro
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- AI Feedback Toast ---
 const AiFeedbackToast = () => {
     const { aiFeedback, clearAiFeedback } = useTasks();
 
     if (!aiFeedback) return null;
-
     const isSuccess = aiFeedback.type === 'success';
     
     return (
         <div 
             onClick={clearAiFeedback}
-            className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] animate-fade-in flex justify-center w-full max-w-[90%]"
+            className="fixed left-1/2 -translate-x-1/2 z-[100] animate-fade-in flex justify-center w-full max-w-[90%]"
+            // Tighter positioning near Dynamic Island
+            style={{ top: 'calc(6px + env(safe-area-inset-top) + var(--sa-top, 0px))' }}
         >
             <div className={`bg-white/95 backdrop-blur-md border border-white/40 shadow-xl rounded-full pl-3 pr-4 py-2 relative overflow-hidden flex items-center gap-3 cursor-pointer ${
                 isSuccess ? 'shadow-purple-500/10' : 'shadow-gray-500/10'
@@ -111,9 +236,9 @@ const AiFeedbackToast = () => {
 // --- Main App Content ---
 
 const AppContent: React.FC = () => {
+  const { addSuccessTrigger } = useTasks();
   const [currentView, setCurrentView] = useState<ViewState>('matrix');
   const [isAddModalOpen, setAddModalOpen] = useState(false);
-  const { addSuccessTrigger } = useTasks();
   const [isSuccessAnim, setSuccessAnim] = useState(false);
 
   useEffect(() => {
@@ -135,64 +260,55 @@ const AppContent: React.FC = () => {
   );
 
   return (
-    // Desktop Container Wrapper
-    // Changed sm:bg-[#121212] to sm:bg-gray-200 (#E5E7EB) for better visibility
-    <div className="w-full h-[100dvh] bg-[#F5F7FA] sm:bg-gray-200 sm:flex sm:items-center sm:justify-center overflow-hidden">
-        {/* Mobile Device Simulation Container */}
-        <div 
-            className="w-full h-full sm:w-[430px] sm:h-[92vh] sm:max-h-[932px] sm:rounded-[44px] bg-[#F5F7FA] sm:shadow-[0_0_0_12px_#1c1c1e,0_0_0_14px_#3a3a3c,0_40px_80px_-15px_rgba(0,0,0,0.8)] overflow-hidden text-gray-900 relative flex flex-col transition-all duration-300 transform-gpu"
-            style={{ 
-                // Creating a containing block for fixed position children
-                transform: 'translate3d(0, 0, 0)' 
-            }}
-        >
-            <AiFeedbackToast />
-            
-            {/* Main Content Area */}
-            <div className="flex-1 overflow-hidden relative z-0">
-                <div className={`w-full h-full absolute inset-0 transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'matrix' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}>
-                    <MatrixView />
-                </div>
-                <div className={`w-full h-full absolute inset-0 transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'list' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}>
-                    <ListView />
-                </div>
-                 <div className={`w-full h-full absolute inset-0 transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'habits' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}>
-                    <HabitView />
-                </div>
-                <div className={`w-full h-full absolute inset-0 transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'profile' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}>
-                    <ProfileView />
-                </div>
+    <div className="w-full h-full bg-[#F5F7FA] overflow-hidden relative flex flex-col">
+        <AiFeedbackToast />
+        
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-hidden relative z-0">
+            <div className={`w-full h-full absolute inset-0 transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'matrix' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}>
+                <MatrixView />
             </div>
-
-            {/* Bottom Navigation */}
-            <div className="bg-white/95 backdrop-blur-xl flex justify-around items-start pt-4 px-4 pb-[calc(16px+env(safe-area-inset-bottom))] z-50 absolute bottom-0 left-0 right-0 border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
-                <NavButton view="matrix" icon={LayoutGrid} />
-                <NavButton view="list" icon={ListTodo} />
-                
-                {/* Add Button with Success Animation */}
-                <button 
-                    onClick={() => setAddModalOpen(true)}
-                    className="relative -top-8 group"
-                >
-                    <div 
-                        className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-xl shadow-black/20 transition-all duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} border-[4px] border-white ring-1 ring-gray-100 ${
-                            isSuccessAnim ? 'bg-green-500 scale-110 rotate-12' : 'bg-black group-hover:scale-105 group-active:scale-95'
-                        }`}
-                    >
-                        {isSuccessAnim ? (
-                            <Check className="w-8 h-8 stroke-[3]" />
-                        ) : (
-                            <Plus className="w-8 h-8 stroke-[3]" />
-                        )}
-                    </div>
-                </button>
-
-                <NavButton view="habits" icon={Repeat} />
-                <NavButton view="profile" icon={User} />
+            <div className={`w-full h-full absolute inset-0 transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'list' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}>
+                <ListView />
             </div>
-
-            <AddModal isOpen={isAddModalOpen} onClose={() => setAddModalOpen(false)} />
+             <div className={`w-full h-full absolute inset-0 transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'habits' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}>
+                <HabitView />
+            </div>
+            <div className={`w-full h-full absolute inset-0 transition-opacity duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} ${currentView === 'profile' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'}`}>
+                <ProfileView />
+            </div>
         </div>
+
+        {/* Bottom Navigation */}
+        <div 
+            className="bg-white/95 backdrop-blur-xl flex justify-around items-start pt-3 px-4 pb-5 z-50 absolute bottom-0 left-0 right-0 border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]"
+        >
+            <NavButton view="matrix" icon={LayoutGrid} />
+            <NavButton view="list" icon={ListTodo} />
+            
+            {/* Add Button with Success Animation */}
+            <button 
+                onClick={() => setAddModalOpen(true)}
+                className="relative -top-8 group"
+            >
+                <div 
+                    className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-xl shadow-black/20 transition-all duration-${ANIMATION_DURATIONS.VIEW_TRANSITION} border-[4px] border-white ring-1 ring-gray-100 ${
+                        isSuccessAnim ? 'bg-green-500 scale-110 rotate-12' : 'bg-black group-hover:scale-105 group-active:scale-95'
+                    }`}
+                >
+                    {isSuccessAnim ? (
+                        <Check className="w-8 h-8 stroke-[3]" />
+                    ) : (
+                        <Plus className="w-8 h-8 stroke-[3]" />
+                    )}
+                </div>
+            </button>
+
+            <NavButton view="habits" icon={Repeat} />
+            <NavButton view="profile" icon={User} />
+        </div>
+
+        <AddModal isOpen={isAddModalOpen} onClose={() => setAddModalOpen(false)} />
     </div>
   );
 };
@@ -202,7 +318,9 @@ export default function App() {
     <ErrorBoundary>
       <LanguageProvider>
         <TaskProvider>
-          <AppContent />
+            <PhoneFrame>
+              <AppContent />
+            </PhoneFrame>
         </TaskProvider>
       </LanguageProvider>
     </ErrorBoundary>
