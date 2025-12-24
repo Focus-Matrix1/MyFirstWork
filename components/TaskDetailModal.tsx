@@ -37,6 +37,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose,
   });
 
   const descRef = useRef<HTMLTextAreaElement>(null);
+  
+  // We keep the ref for potential future use or focus management, though not used for showPicker anymore
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (task) {
@@ -121,6 +124,17 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose,
     return new Date(timestamp).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US');
   };
 
+  const getFormattedDate = (dateStr: string) => {
+      if (!dateStr) return null;
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      return date.toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', {
+          year: 'numeric',
+          month: language === 'zh' ? 'long' : 'short',
+          day: 'numeric'
+      });
+  };
+
   return (
     <div className="absolute inset-0 z-[100] flex items-end justify-center pointer-events-none">
         {/* Backdrop */}
@@ -186,27 +200,55 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose,
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
+                        {/* Date Picker */}
                         <div>
                             <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 px-1 block h-8 leading-tight">
                                 {t('detail.date')}
                             </label>
-                            <input 
-                                type="date"
-                                disabled={hardcoreMode}
-                                value={plannedDate}
-                                onChange={(e) => {
-                                    setPlannedDate(e.target.value);
-                                    saveChanges({ plannedDate: e.target.value });
-                                }}
-                                className={`w-full bg-gray-50 border border-gray-100 rounded-xl p-3 outline-none text-sm font-medium transition-colors ${hardcoreMode ? 'text-gray-400' : 'text-gray-900 focus:bg-white focus:border-gray-200'}`}
-                            />
+                            <div 
+                                className={`relative w-full h-[50px] bg-gray-50 border border-gray-100 rounded-xl overflow-hidden group transition-colors ${!hardcoreMode && 'group-hover:bg-gray-100 focus-within:bg-white focus-within:border-gray-200'}`}
+                            >
+                                {/* Visual Layer */}
+                                <div className={`absolute inset-0 flex items-center px-3 text-sm font-medium transition-colors ${!plannedDate ? 'text-gray-400' : 'text-gray-900'}`}>
+                                    {getFormattedDate(plannedDate) || t('detail.date.placeholder')}
+                                </div>
+
+                                {/* Native Input - Full Cover - High Z-index to ensure clicks are captured */}
+                                <input 
+                                    ref={dateInputRef}
+                                    type="date"
+                                    disabled={hardcoreMode}
+                                    value={plannedDate}
+                                    onChange={(e) => {
+                                        setPlannedDate(e.target.value);
+                                        saveChanges({ plannedDate: e.target.value });
+                                    }}
+                                    className={`absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer ${hardcoreMode ? 'cursor-not-allowed' : ''}`}
+                                    style={{ appearance: 'none' }}
+                                />
+                                
+                                {/* Clear Button */}
+                                {plannedDate && !hardcoreMode && (
+                                     <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setPlannedDate('');
+                                            saveChanges({plannedDate: ''});
+                                        }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-1.5 bg-gray-200 rounded-full text-gray-500 hover:bg-gray-300 active:scale-95 transition-all"
+                                     >
+                                        <X size={12} strokeWidth={3} />
+                                     </button>
+                                )}
+                            </div>
                         </div>
                         
+                        {/* Duration Input */}
                          <div>
                             <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 px-1 block h-8 leading-tight">
                                 {t('detail.duration')}
                             </label>
-                            <div className={`flex items-center bg-gray-50 border border-gray-100 rounded-xl overflow-hidden transition-colors ${!hardcoreMode && 'focus-within:bg-white focus-within:border-gray-200'}`}>
+                            <div className={`flex items-center h-[50px] bg-gray-50 border border-gray-100 rounded-xl overflow-hidden transition-colors ${!hardcoreMode && 'focus-within:bg-white focus-within:border-gray-200'}`}>
                                 <input 
                                     type="number"
                                     disabled={hardcoreMode}
@@ -214,12 +256,12 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose,
                                     onChange={(e) => setDurationVal(e.target.value)}
                                     onBlur={() => saveChanges()}
                                     placeholder="0"
-                                    className={`w-full bg-transparent p-3 outline-none text-sm font-medium appearance-none no-spinner ${hardcoreMode ? 'text-gray-400' : 'text-gray-900'}`}
+                                    className={`w-full h-full bg-transparent px-3 outline-none text-sm font-medium appearance-none no-spinner ${hardcoreMode ? 'text-gray-400' : 'text-gray-900'}`}
                                 />
                                 <button 
                                     onClick={handleUnitToggle}
                                     disabled={hardcoreMode}
-                                    className={`h-full px-3 py-3 text-sm font-bold border-l border-gray-200 transition-colors flex items-center justify-center shrink-0 min-w-[50px] gap-1 ${hardcoreMode ? 'bg-gray-50 text-gray-400' : 'bg-gray-100 hover:bg-gray-200 text-gray-600 active:bg-gray-300'}`}
+                                    className={`h-full px-3 text-sm font-bold border-l border-gray-200 transition-colors flex items-center justify-center shrink-0 min-w-[50px] gap-1 ${hardcoreMode ? 'bg-gray-50 text-gray-400' : 'bg-gray-100 hover:bg-gray-200 text-gray-600 active:bg-gray-300'}`}
                                 >
                                     {durationUnit}
                                     <ChevronDown className="w-3 h-3 opacity-50" />
