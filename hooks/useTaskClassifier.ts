@@ -5,7 +5,7 @@ import { GEMINI_API_KEY } from "../config";
 export interface ClassificationResult {
   category: CategoryId;
   duration?: string;
-  error?: 'quota' | 'other';
+  error?: 'quota' | 'model_not_found' | 'other';
 }
 
 export const useTaskClassifier = () => {
@@ -20,9 +20,10 @@ export const useTaskClassifier = () => {
       // 2. Init Client
       const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
       
-      // 3. Use 'gemini-1.5-flash' - it has the highest free tier quota and stability
+      // 3. Use 'gemini-3-flash-preview' as the latest generation Flash model for text tasks.
+      // (Note: 'gemini-2.5-flash' is not a standard text model ID in the public API, 3-flash-preview is the correct latest equivalent)
       const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash', 
+        model: 'gemini-3-flash-preview', 
         contents: `Classify this task into the Eisenhower Matrix: "${title}". ${description ? `Context: ${description}` : ''}`,
         config: {
           systemInstruction: "You are a productivity expert. Classify tasks into the Eisenhower Matrix (q1, q2, q3, q4). Rule: NEVER return 'inbox'. You MUST make a best guess based on the title. q1=Urgent+Important, q2=Important, q3=Urgent, q4=Neither. Also estimate duration in '15m', '1h' format.",
@@ -61,6 +62,11 @@ export const useTaskClassifier = () => {
       
       if (e.status === 429) {
           return { category: 'inbox', error: 'quota' };
+      }
+      
+      if (e.status === 404) {
+           console.error("Model gemini-3-flash-preview not found. Please check API Key permissions.");
+           return { category: 'inbox', error: 'model_not_found' };
       }
       
       return { category: 'inbox', error: 'other' };

@@ -113,6 +113,13 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 });
                 if (navigator.vibrate) navigator.vibrate(INTERACTION.VIBRATION.SOFT);
             }
+            else if (aiResult.error === 'model_not_found') {
+                // Model Not Found Feedback
+                setAiFeedback({
+                    message: "⚠️ AI Model Not Found",
+                    type: 'error'
+                });
+            }
             else if (aiResult.category !== 'inbox' && !aiResult.error) {
                 // Success Classification
                 const finalDuration = duration || aiResult.duration;
