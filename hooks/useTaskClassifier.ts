@@ -4,27 +4,27 @@ import { GEMINI_API_KEY } from "../config";
 
 export const useTaskClassifier = () => {
   const classifyTaskWithAI = async (title: string, description?: string): Promise<{ category: CategoryId, duration?: string }> => {
-    // Check the centralized configuration
+    // 1. Check Key Presence
     if (!GEMINI_API_KEY) {
       console.warn("AI Mode: No API Key configured");
       return { category: 'inbox' }; 
     }
 
     try {
-      // Create instance using the key from config directly
+      // 2. Init Client
       const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
       
+      // 3. Switch to 'gemini-2.0-flash' which is currently more widely available and stable than 3-preview
+      // If 2.0 fails, it usually falls back gracefully or throws a readable error.
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.0-flash', 
         contents: `Classify this task into the Eisenhower Matrix: "${title}". ${description ? `Context: ${description}` : ''}`,
         config: {
-          // Updated instruction to forbid 'inbox' and force a choice based on best guess
-          systemInstruction: "You are a productivity expert. Classify tasks into the Eisenhower Matrix (q1, q2, q3, q4). Rule: NEVER return 'inbox'. You MUST make a best guess based on the title. q1=Urgent+Important, q2=Important, q3=Urgent, q4=Neither. Also estimate duration.",
+          systemInstruction: "You are a productivity expert. Classify tasks into the Eisenhower Matrix (q1, q2, q3, q4). Rule: NEVER return 'inbox'. You MUST make a best guess based on the title. q1=Urgent+Important, q2=Important, q3=Urgent, q4=Neither. Also estimate duration in '15m', '1h' format.",
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              // Removed 'inbox' from enum to force classification
               category: { type: Type.STRING, enum: ['q1', 'q2', 'q3', 'q4'] },
               duration: { type: Type.STRING, description: "Estimated duration, e.g. '30m'" }
             },
@@ -34,7 +34,10 @@ export const useTaskClassifier = () => {
       });
       
       const text = response.text;
-      if (!text) return { category: 'inbox' };
+      if (!text) {
+          console.warn("AI returned empty text");
+          return { category: 'inbox' };
+      }
       
       const result = JSON.parse(text);
       const cat = result.category?.toLowerCase();
@@ -46,10 +49,18 @@ export const useTaskClassifier = () => {
         };
       }
       
+      console.warn("AI returned invalid category:", cat);
       return { category: 'inbox' };
-    } catch (e) {
-      // Log full error object to console so user can verify if API Key is invalid (e.g., 400 or 403)
-      console.error("AI Classification API Error:", e);
+
+    } catch (e: any) {
+      // 4. Detailed Error Logging
+      // Check your browser console (F12) to see this message if it fails again.
+      console.error("AI Classification Failed. Details:", {
+          message: e.message,
+          status: e.status, // HTTP Status (400, 403, 404, etc)
+          statusText: e.statusText,
+          details: e.errorDetails
+      });
       return { category: 'inbox' };
     }
   };
