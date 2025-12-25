@@ -13,4 +13,4 @@ export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // 在此处配置您的 Gemini API Key。
 // You can replace process.env.API_KEY with your actual key string, e.g., "AIzaSy..."
 // 您可以将 process.env.API_KEY 替换为您的真实 Key 字符串，例如 "AIzaSy..."
-export const GEMINI_API_KEY = process.env.API_KEY || "";
+export const GEMINI_API_KEY = "AIzaSyD9piPuyDV_J8-quGj3yZRq0r1se54UYOQ";
