@@ -9,7 +9,7 @@ import { GEMINI_API_KEY } from '../config';
 
 export interface AiFeedback {
     message: string;
-    type: 'success' | 'neutral';
+    type: 'success' | 'neutral' | 'error';
 }
 
 interface TaskContextType {
@@ -105,19 +105,27 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
             const aiResult = await classifyTaskWithAI(title, description);
             
-            if (aiResult.category !== 'inbox') {
+            if (aiResult.error === 'quota') {
+                // Rate Limit Feedback
+                setAiFeedback({
+                    message: "⚠️ AI Busy (Rate Limit)",
+                    type: 'error'
+                });
+                if (navigator.vibrate) navigator.vibrate(INTERACTION.VIBRATION.SOFT);
+            }
+            else if (aiResult.category !== 'inbox' && !aiResult.error) {
+                // Success Classification
                 const finalDuration = duration || aiResult.duration;
                 updateTask(tempId, { category: aiResult.category, duration: finalDuration });
                 if (navigator.vibrate) navigator.vibrate(INTERACTION.VIBRATION.AI_AUTO_SORT);
                 
-                // Success Feedback
                 const durationText = finalDuration ? ` (${finalDuration})` : '';
                 setAiFeedback({
                     message: `${t('ai.sorted')} ${aiResult.category.toUpperCase()}${durationText}`,
                     type: 'success'
                 });
             } else {
-                // Failure/Unsure Feedback
+                // General Failure / Unsure
                 setAiFeedback({
                     message: t('ai.unsure'),
                     type: 'neutral'
