@@ -16,14 +16,16 @@ export const useTaskClassifier = () => {
       
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Classify the task: "${title}". Description: "${description || ''}"`,
+        contents: `Classify this task into the Eisenhower Matrix: "${title}". ${description ? `Context: ${description}` : ''}`,
         config: {
-          systemInstruction: "You are an expert productivity assistant. Classify the task into the Eisenhower Matrix. q1: Urgent & Important, q2: Important Not Urgent, q3: Urgent Not Important, q4: Not Urgent Not Important. Estimate duration (e.g. 30m, 1h).",
+          // Updated instruction to forbid 'inbox' and force a choice based on best guess
+          systemInstruction: "You are a productivity expert. Classify tasks into the Eisenhower Matrix (q1, q2, q3, q4). Rule: NEVER return 'inbox'. You MUST make a best guess based on the title. q1=Urgent+Important, q2=Important, q3=Urgent, q4=Neither. Also estimate duration.",
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              category: { type: Type.STRING, enum: ['q1', 'q2', 'q3', 'q4', 'inbox'] },
+              // Removed 'inbox' from enum to force classification
+              category: { type: Type.STRING, enum: ['q1', 'q2', 'q3', 'q4'] },
               duration: { type: Type.STRING, description: "Estimated duration, e.g. '30m'" }
             },
             required: ['category']
@@ -46,7 +48,8 @@ export const useTaskClassifier = () => {
       
       return { category: 'inbox' };
     } catch (e) {
-      console.error("AI Classification failed", e);
+      // Log full error object to console so user can verify if API Key is invalid (e.g., 400 or 403)
+      console.error("AI Classification API Error:", e);
       return { category: 'inbox' };
     }
   };
