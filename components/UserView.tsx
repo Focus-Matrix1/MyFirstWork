@@ -283,10 +283,14 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 remoteTasks.forEach(rt => {
                     const idx = mergedTasks.findIndex(t => t.id === rt.id);
                     if (idx > -1) {
-                        const localItem = mergedTasks[idx];
-                        // 只有当远程数据的更新时间 晚于 本地数据时，才覆盖
-                        if (!localItem.updatedAt || (rt.updatedAt && new Date(rt.updatedAt) > new Date(localItem.updatedAt))) {
-                             mergedTasks[idx] = rt;
+                        const localTask = mergedTasks[idx];
+                        // 🛡️ 核心修复：双重保险
+                        // 只有当 云端更新时间 > 本地更新时间 时，才覆盖本地
+                        const remoteTime = rt.updatedAt ? new Date(rt.updatedAt).getTime() : 0;
+                        const localTime = localTask.updatedAt ? new Date(localTask.updatedAt).getTime() : 0;
+                        
+                        if (remoteTime > localTime) {
+                            mergedTasks[idx] = rt;
                         }
                     } else {
                         mergedTasks.push(rt);
@@ -297,9 +301,12 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 remoteHabits.forEach(rh => {
                     const idx = mergedHabits.findIndex(h => h.id === rh.id);
                     if (idx > -1) {
-                         const localItem = mergedHabits[idx];
-                         // Only overwrite if remote is newer
-                         if (!localItem.updatedAt || (rh.updatedAt && new Date(rh.updatedAt) > new Date(localItem.updatedAt))) {
+                         const localHabit = mergedHabits[idx];
+                         // 🛡️ 同样的修复逻辑应用于习惯
+                         const remoteTime = rh.updatedAt ? new Date(rh.updatedAt).getTime() : 0;
+                         const localTime = localHabit.updatedAt ? new Date(localHabit.updatedAt).getTime() : 0;
+
+                         if (remoteTime > localTime) {
                              mergedHabits[idx] = rh;
                          }
                     } else {
