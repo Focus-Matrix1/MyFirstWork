@@ -14,6 +14,10 @@ export interface Task {
   duration?: string; // e.g. "30m", "1h"
   translationKey?: string; // Key for dynamic localization of demo tasks
   autoSorted?: boolean; // True if the task was classified by AI
+  
+  // Sync fields
+  updatedAt?: string; // ISO String
+  isDeleted?: boolean;
 }
 
 export interface Habit {
@@ -26,6 +30,10 @@ export interface Habit {
   streak: number;
   frequency: string; // e.g., "1d", "12h"
   translationKey?: string; // Key for dynamic localization of demo habits
+  
+  // Sync fields
+  updatedAt?: string; // ISO String
+  isDeleted?: boolean;
 }
 
 export type ViewState = 'matrix' | 'list' | 'habits' | 'profile';

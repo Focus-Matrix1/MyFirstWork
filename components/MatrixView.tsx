@@ -15,7 +15,7 @@ const GlitchEntrance: React.FC<{
     children: React.ReactNode; 
     taskCreatedAt: number;
     showDropIndicator?: boolean;
-    isAutoSorted?: boolean; // New prop
+    isAutoSorted?: boolean; 
 }> = ({ children, taskCreatedAt, showDropIndicator, isAutoSorted }) => {
     // 1. Lock "isNew" state on mount. 
     // Logic update: Only true if created recently AND auto-sorted by AI.
@@ -36,7 +36,20 @@ const GlitchEntrance: React.FC<{
     // We removed the wrapper div, so this div is now the direct child of the flex container.
     // Setting z-30 here allows it to truly float above subsequent siblings in the list.
     return (
-        <div className={`relative w-full transition-all ${!showContent ? 'z-30' : 'z-0'}`}>
+        <motion.div 
+            layout
+            initial={{ opacity: isNew ? 0 : 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ 
+                opacity: 0,
+                scaleY: 0,
+                filter: "brightness(3)", // Flash effect
+                backgroundColor: "#22c55e", // Hint of matrix green
+                marginBottom: 0,
+                transition: { duration: 0.25, ease: "backIn" }
+            }}
+            className={`relative w-full origin-center ${!showContent ? 'z-30' : 'z-0'}`}
+        >
             {/* Internal Drop Indicator - Rendered here to avoid needing a wrapper div */}
             {showDropIndicator && (
                  <div className="h-0.5 w-full bg-blue-500 rounded-full my-1 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
@@ -101,7 +114,7 @@ const GlitchEntrance: React.FC<{
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </motion.div>
     );
 };
 
@@ -209,23 +222,25 @@ const Quadrant: React.FC<{
         </div>
       </div>
       <div className="flex-1 px-2 pb-2 overflow-y-auto no-scrollbar pointer-events-auto space-y-1 task-list-container">
-        {tasks.map((task, i) => (
-             <GlitchEntrance 
-                key={task.id} 
-                taskCreatedAt={task.createdAt}
-                showDropIndicator={dropTarget?.zone === id && dropTarget.index === i}
-                isAutoSorted={task.autoSorted} // Pass the flag
-             >
-                 <DraggableTaskItem 
-                    task={task}
-                    onDragStart={onDragStart}
-                    onClick={onClickTask}
-                    onComplete={onComplete}
-                    isDragging={draggedTaskId === task.id}
-                    t={t}
-                 />
-             </GlitchEntrance>
-        ))}
+        <AnimatePresence mode="popLayout">
+            {tasks.map((task, i) => (
+                 <GlitchEntrance 
+                    key={task.id} 
+                    taskCreatedAt={task.createdAt}
+                    showDropIndicator={dropTarget?.zone === id && dropTarget.index === i}
+                    isAutoSorted={task.autoSorted} // Pass the flag
+                 >
+                     <DraggableTaskItem 
+                        task={task}
+                        onDragStart={onDragStart}
+                        onClick={onClickTask}
+                        onComplete={onComplete}
+                        isDragging={draggedTaskId === task.id}
+                        t={t}
+                     />
+                 </GlitchEntrance>
+            ))}
+        </AnimatePresence>
         {dropTarget?.zone === id && dropTarget.index === tasks.length && (
             <div className="h-0.5 w-full bg-blue-500 rounded-full my-1 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
         )}

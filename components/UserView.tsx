@@ -1,10 +1,11 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useTasks } from '../context/TaskContext';
 import { useLanguage } from '../context/LanguageContext';
 import { User, Settings, Zap, Clock, TrendingUp, Cloud, Languages, ShieldAlert, Trash2, X, Loader2, RefreshCw, BarChart3, CheckCircle2, Bot, AlertTriangle, Download, Smartphone, Share, MoreVertical, Flame, CalendarDays, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
-import { Habit } from '../types';
+import { Habit, Task } from '../types';
 
 const parseDuration = (durationStr?: string): number => {
   if (!durationStr) return 0;
@@ -28,14 +29,39 @@ const getLocalDateStr = (d: Date) => {
     return `${year}-${month}-${day}`;
 };
 
+// --- Conversion Helpers ---
+const toSnakeCase = (obj: any): any => {
+    const newObj: any = {};
+    for (const key in obj) {
+        let newKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+        if (key === 'createdAt') newKey = 'created_at'; // Special mapping if needed
+        if (key === 'updatedAt') newKey = 'updated_at';
+        if (key === 'isDeleted') newKey = 'is_deleted';
+        if (key === 'plannedDate') newKey = 'planned_date';
+        if (key === 'completedAt') newKey = 'completed_at';
+        if (key === 'completedDates') newKey = 'completed_dates';
+        if (key === 'autoSorted') newKey = 'auto_sorted';
+        if (key === 'translationKey') newKey = 'translation_key';
+        newObj[newKey] = obj[key];
+    }
+    return newObj;
+};
+
+const toCamelCase = (obj: any): any => {
+    const newObj: any = {};
+    for (const key in obj) {
+        let newKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+        newObj[newKey] = obj[key];
+    }
+    return newObj;
+};
+
 const HabitHeatmap: React.FC<{ habit: Habit }> = ({ habit }) => {
     const { t, language } = useLanguage();
     const [tooltip, setTooltip] = useState<{ date: string, isCompleted: boolean, x: number, y: number } | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     
     const { weeks, monthLabels } = useMemo(() => {
-        // Increased from 91 to 168 (24 weeks) to better fit wider screens (iPhone Pro Max / Desktop Sim)
-        // 24 weeks * 13px (10px dot + 3px gap) approx 312px width, plus month labels
         const daysToShow = 168; 
         const result = [];
         const today = new Date();
@@ -163,7 +189,7 @@ const InstallGuide: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 };
 
 const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-    const { hardcoreMode, toggleHardcoreMode, clearAllTasks, tasks, habits, restoreTasks, aiMode, setAiMode, isApiKeyMissing } = useTasks();
+    const { hardcoreMode, toggleHardcoreMode, clearAllTasks, rawTasks, rawHabits, syncLocalData, aiMode, setAiMode, isApiKeyMissing } = useTasks();
     const { language, setLanguage, t } = useLanguage();
     const [user, setUser] = useState<SupabaseUser | null>(null);
     const [syncing, setSyncing] = useState(false);
@@ -198,20 +224,101 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         } catch (err: any) { setAuthError(err.message || t('auth.error')); } finally { setAuthLoading(false); }
     };
 
-    const handleSync = async (restoreMode = false) => {
+    const handleSync = async () => {
         if (!user) { setShowAuth(true); return; }
         setSyncing(true);
         try {
-            if (restoreMode) {
-                const { data, error } = await supabase.from('backups').select('data').eq('user_id', user.id).single();
-                if (error && error.code !== 'PGRST116') throw error;
-                if (data && data.data) { restoreTasks(data.data); alert(t('cloud.restore_success')); }
-            } else {
-                const { error } = await supabase.from('backups').upsert({ user_id: user.id, data: { tasks, habits }, updated_at: new Date().toISOString() });
+            const lastSyncTime = localStorage.getItem('focus-matrix-last-sync');
+            const now = new Date().toISOString();
+
+            // 1. PUSH: Upload local changes (Row Level)
+            // If first sync (no lastSyncTime), push ALL data to ensure backend (which might be empty) gets initialized.
+            // If subsequent sync, only push updated items.
+            const tasksToPush = lastSyncTime 
+                ? rawTasks.filter(t => t.updatedAt && t.updatedAt > lastSyncTime)
+                : rawTasks;
+            
+            const habitsToPush = lastSyncTime
+                ? rawHabits.filter(h => h.updatedAt && h.updatedAt > lastSyncTime)
+                : rawHabits;
+
+            if (tasksToPush.length > 0) {
+                const { error } = await supabase.from('tasks').upsert(
+                    tasksToPush.map(t => ({ ...toSnakeCase(t), user_id: user.id }))
+                );
                 if (error) throw error;
-                alert(t('cloud.upload_success'));
             }
-        } catch (err: any) { alert("Sync Failed: " + err.message); } finally { setSyncing(false); }
+
+            if (habitsToPush.length > 0) {
+                const { error } = await supabase.from('habits').upsert(
+                    habitsToPush.map(h => ({ ...toSnakeCase(h), user_id: user.id }))
+                );
+                if (error) throw error;
+            }
+
+            // 2. PULL: Get remote changes
+            let remoteTasks: Task[] = [];
+            let remoteHabits: Habit[] = [];
+            
+            // Only fetch changes if we have synced before. 
+            // If it's the very first sync, we just pushed everything, so remote matches local (unless another device added data).
+            // For robustness, always pull changes after push.
+            
+            const taskQuery = supabase.from('tasks').select('*');
+            if (lastSyncTime) taskQuery.gt('updated_at', lastSyncTime);
+            const { data: rTasks, error: tErr } = await taskQuery;
+            if (tErr) throw tErr;
+            if (rTasks) remoteTasks = rTasks.map(toCamelCase);
+
+            const habitQuery = supabase.from('habits').select('*');
+            if (lastSyncTime) habitQuery.gt('updated_at', lastSyncTime);
+            const { data: rHabits, error: hErr } = await habitQuery;
+            if (hErr) throw hErr;
+            if (rHabits) remoteHabits = rHabits.map(toCamelCase);
+
+            // 3. MERGE: Apply remote changes to local state
+            // Strategy: Remote timestamp wins (which is effectively what we got by filtering > lastSyncTime)
+            if (remoteTasks.length > 0 || remoteHabits.length > 0) {
+                const mergedTasks = [...rawTasks];
+                remoteTasks.forEach(rt => {
+                    const idx = mergedTasks.findIndex(t => t.id === rt.id);
+                    if (idx > -1) {
+                        const localItem = mergedTasks[idx];
+                        // 只有当远程数据的更新时间 晚于 本地数据时，才覆盖
+                        if (!localItem.updatedAt || (rt.updatedAt && new Date(rt.updatedAt) > new Date(localItem.updatedAt))) {
+                             mergedTasks[idx] = rt;
+                        }
+                    } else {
+                        mergedTasks.push(rt);
+                    }
+                });
+
+                const mergedHabits = [...rawHabits];
+                remoteHabits.forEach(rh => {
+                    const idx = mergedHabits.findIndex(h => h.id === rh.id);
+                    if (idx > -1) {
+                         const localItem = mergedHabits[idx];
+                         // Only overwrite if remote is newer
+                         if (!localItem.updatedAt || (rh.updatedAt && new Date(rh.updatedAt) > new Date(localItem.updatedAt))) {
+                             mergedHabits[idx] = rh;
+                         }
+                    } else {
+                        mergedHabits.push(rh);
+                    }
+                });
+
+                syncLocalData(mergedTasks, mergedHabits);
+            }
+
+            // 4. Update sync timestamp
+            localStorage.setItem('focus-matrix-last-sync', now);
+            alert(t('cloud.upload_success')); // Or generic "Sync complete"
+        } catch (err: any) { 
+            console.error(err);
+            alert("Sync Failed: " + (err.message || 'Unknown error')); 
+        } finally { 
+            setSyncing(false); 
+        }
     };
 
     if (showAuth) {
@@ -264,10 +371,12 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         </div>
                         
                         {user ? (
-                             <div className="grid grid-cols-2 gap-2">
-                                <button onClick={() => handleSync(false)} disabled={syncing} className="bg-white py-2 rounded-xl text-[10px] font-bold shadow-sm border border-gray-100 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform text-gray-700">{syncing ? <Loader2 className="w-3 h-3 animate-spin"/> : <RefreshCw className="w-3 h-3 text-gray-400"/>} Backup</button>
-                                <button onClick={() => handleSync(true)} disabled={syncing} className="bg-white py-2 rounded-xl text-[10px] font-bold shadow-sm border border-gray-100 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform text-gray-700">Restore</button>
-                                <button onClick={async () => { await supabase.auth.signOut(); setUser(null); }} className="col-span-2 text-red-400 hover:text-red-500 text-[10px] font-bold py-1.5 mt-1">Log Out</button>
+                             <div className="grid grid-cols-1 gap-2">
+                                <button onClick={handleSync} disabled={syncing} className="bg-white py-2 rounded-xl text-[10px] font-bold shadow-sm border border-gray-100 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform text-gray-700">
+                                    {syncing ? <Loader2 className="w-3 h-3 animate-spin"/> : <RefreshCw className="w-3 h-3 text-gray-400"/>} 
+                                    {syncing ? t('cloud.syncing') : t('cloud.sync')}
+                                </button>
+                                <button onClick={async () => { await supabase.auth.signOut(); setUser(null); }} className="text-red-400 hover:text-red-500 text-[10px] font-bold py-1.5 mt-1">Log Out</button>
                              </div>
                         ) : ( 
                             <button onClick={() => setShowAuth(true)} className="w-full bg-indigo-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-indigo-200 active:scale-[0.98] transition-transform">

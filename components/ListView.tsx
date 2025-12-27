@@ -26,7 +26,20 @@ const GlitchEntrance: React.FC<{ children: React.ReactNode; taskCreatedAt: numbe
 
     // 2. Elevate z-index during animation to prevent subsequent siblings from covering the overlay
     return (
-        <div className={`relative w-full transition-all ${!showContent ? 'z-30' : 'z-0'}`}>
+        <motion.div 
+            layout
+            initial={{ opacity: isNew ? 0 : 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ 
+                opacity: 0,
+                scaleY: 0,
+                filter: "brightness(3)", // Flash effect
+                backgroundColor: "#22c55e", // Hint of matrix green
+                marginBottom: 0,
+                transition: { duration: 0.25, ease: "backIn" }
+            }}
+            className={`relative w-full origin-center ${!showContent ? 'z-30' : 'z-0'}`}
+        >
             <motion.div
                 initial={{ opacity: isNew ? 0 : 1 }}
                 animate={{ opacity: showContent ? 1 : 0 }}
@@ -77,7 +90,7 @@ const GlitchEntrance: React.FC<{ children: React.ReactNode; taskCreatedAt: numbe
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </motion.div>
     );
 };
 
@@ -313,7 +326,33 @@ export const ListView: React.FC = () => {
                     <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-md font-bold">{sortedInbox.length}</span>
                 </div>
                  <div className="space-y-1">
-                    {sortedInbox.map(task => (
+                    <AnimatePresence mode="popLayout">
+                        {sortedInbox.map(task => (
+                            <GlitchEntrance key={task.id} taskCreatedAt={task.createdAt} isAutoSorted={task.autoSorted}>
+                                <SwipeableTask 
+                                    task={task} 
+                                    onCategorize={setCategorizingTask} 
+                                    onDelete={deleteTask} 
+                                    onComplete={completeTask} 
+                                    onClick={setEditingTask} 
+                                    t={t} 
+                                    hardcoreMode={hardcoreMode} 
+                                />
+                            </GlitchEntrance>
+                        ))}
+                    </AnimatePresence>
+                 </div>
+            </div>
+        )}
+
+        {sortedActive.length > 0 && (
+            <div className="mb-6 space-y-1">
+                <div className="px-3 py-2 flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-black"></div>
+                    <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">{t('list.header.today')}</span>
+                </div>
+                <AnimatePresence mode="popLayout">
+                    {sortedActive.map(task => (
                         <GlitchEntrance key={task.id} taskCreatedAt={task.createdAt} isAutoSorted={task.autoSorted}>
                             <SwipeableTask 
                                 task={task} 
@@ -326,29 +365,7 @@ export const ListView: React.FC = () => {
                             />
                         </GlitchEntrance>
                     ))}
-                 </div>
-            </div>
-        )}
-
-        {sortedActive.length > 0 && (
-            <div className="mb-6 space-y-1">
-                <div className="px-3 py-2 flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-black"></div>
-                    <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">{t('list.header.today')}</span>
-                </div>
-                {sortedActive.map(task => (
-                    <GlitchEntrance key={task.id} taskCreatedAt={task.createdAt} isAutoSorted={task.autoSorted}>
-                        <SwipeableTask 
-                            task={task} 
-                            onCategorize={setCategorizingTask} 
-                            onDelete={deleteTask} 
-                            onComplete={completeTask} 
-                            onClick={setEditingTask} 
-                            t={t} 
-                            hardcoreMode={hardcoreMode} 
-                        />
-                    </GlitchEntrance>
-                ))}
+                </AnimatePresence>
             </div>
         )}
 
