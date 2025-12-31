@@ -45,9 +45,14 @@ export const useDraggable = ({ onDrop, onDragStart }: UseDraggableProps) => {
   const lastThrottleRef = useRef<number>(0);
   const dropTargetRef = useRef<DropTarget | null>(null); // To avoid stale closure in throttle check
 
-  const startDrag = useCallback((task: Task, clientX: number, clientY: number, element: HTMLElement) => {
+  const startDrag = useCallback((task: Task, clientX: number, clientY: number, element: HTMLElement, pointerId: number) => {
     const rect = element.getBoundingClientRect();
     
+    // 0. Critical: Capture Pointer Events to prevent scroll hijacking
+    if (element && typeof element.setPointerCapture === 'function') {
+        element.setPointerCapture(pointerId);
+    }
+
     // 1. Cache Layouts NOW (Force Reflow once, then never again during drag)
     const zoneEls = document.querySelectorAll('[data-zone-id]');
     zonesRef.current = Array.from(zoneEls).map(el => {
@@ -75,7 +80,7 @@ export const useDraggable = ({ onDrop, onDragStart }: UseDraggableProps) => {
             };
         });
 
-    // 2. Lock Interaction
+    // 2. Lock Interaction (CSS)
     document.body.style.userSelect = 'none';
     document.body.style.touchAction = 'none';
     document.body.style.webkitUserSelect = 'none';

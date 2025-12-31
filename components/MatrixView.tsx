@@ -120,7 +120,7 @@ const GlitchEntrance: React.FC<{
 
 const DraggableTaskItem: React.FC<{
   task: Task;
-  onDragStart: (task: Task, clientX: number, clientY: number, target: HTMLElement) => void;
+  onDragStart: (task: Task, clientX: number, clientY: number, target: HTMLElement, pointerId: number) => void;
   onClick: (task: Task) => void;
   onComplete: (id: string) => void;
   isDragging?: boolean;
@@ -131,11 +131,15 @@ const DraggableTaskItem: React.FC<{
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('.checkbox-area')) return;
+    
+    // Store pointerId for capture later
+    const pointerId = e.pointerId;
     startPos.current = { x: e.clientX, y: e.clientY };
     const target = e.currentTarget as HTMLElement;
+    
     timeoutRef.current = setTimeout(() => {
         if (navigator.vibrate) navigator.vibrate(INTERACTION.VIBRATION.SUCCESS);
-        onDragStart(task, e.clientX, e.clientY, target);
+        onDragStart(task, e.clientX, e.clientY, target, pointerId);
     }, INTERACTION.DRAG_LONG_PRESS_MS);
   };
 
@@ -168,7 +172,8 @@ const DraggableTaskItem: React.FC<{
       onPointerCancel={handlePointerUp}
       onClick={() => onClick(task)}
       data-task-id={task.id}
-      className={`flex items-center gap-1.5 p-1.5 bg-white rounded-lg shadow-sm border border-transparent active:scale-[0.98] transition-all touch-pan-y select-none cursor-default active:bg-gray-50 ${isDragging ? 'opacity-30' : ''}`}
+      // REMOVED: active:scale-[0.98] and active:bg-gray-50 to prevent misleading visual feedback before drag starts
+      className={`flex items-center gap-1.5 p-1.5 bg-white rounded-lg shadow-sm border border-transparent transition-all touch-pan-y select-none cursor-default ${isDragging ? 'opacity-30' : ''}`}
     >
       <div
         className="checkbox-area w-5 h-5 flex items-center justify-center cursor-pointer"
@@ -194,7 +199,7 @@ const Quadrant: React.FC<{
   tasks: Task[];
   highlighted: boolean;
   onComplete: (id: string) => void;
-  onDragStart: (task: Task, x: number, y: number, el: HTMLElement) => void;
+  onDragStart: (task: Task, x: number, y: number, el: HTMLElement, pointerId: number) => void;
   onClickTask: (task: Task) => void;
   emptyText: string;
   dropTarget: { zone: QuadrantId; index: number } | null;
@@ -282,7 +287,7 @@ export const MatrixView: React.FC = () => {
     onDragStart: () => setInboxOpen(false)
   });
 
-  const handleDragStart = (task: Task, clientX: number, clientY: number, element: HTMLElement) => {
+  const handleDragStart = (task: Task, clientX: number, clientY: number, element: HTMLElement, pointerId: number) => {
     if (hardcoreMode && task.category !== 'inbox') {
         if (navigator.vibrate) navigator.vibrate(INTERACTION.VIBRATION.HARD);
         element.classList.remove('animate-shake');
@@ -291,7 +296,7 @@ export const MatrixView: React.FC = () => {
         setTimeout(() => element.classList.remove('animate-shake'), ANIMATION_DURATIONS.SHAKE_FEEDBACK);
         return;
     }
-    startDrag(task, clientX, clientY, element);
+    startDrag(task, clientX, clientY, element, pointerId);
   };
 
   return (
@@ -366,7 +371,7 @@ export const MatrixView: React.FC = () => {
              <div className="text-center mt-10 text-gray-300 text-sm">{t('matrix.inbox.zero')}</div>
           ) : (
              inboxTasks.map(task => (
-                <div key={task.id} onPointerDown={(e) => handleDragStart(task, e.clientX, e.clientY, e.currentTarget as HTMLElement)} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative active:scale-95 transition-transform touch-none select-none cursor-grab active:cursor-grabbing">
+                <div key={task.id} onPointerDown={(e) => handleDragStart(task, e.clientX, e.clientY, e.currentTarget as HTMLElement, e.pointerId)} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative active:scale-95 transition-transform touch-none select-none cursor-grab active:cursor-grabbing">
                   <div className="flex items-center gap-3 pointer-events-none">
                     <div className="w-2 h-2 rounded-full bg-gray-300"></div>
                     <span className="text-sm font-bold text-gray-700">{task.translationKey ? t(task.translationKey) : task.title}</span>
