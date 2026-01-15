@@ -21,7 +21,7 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = {
     hasError: false,
     error: null
@@ -70,7 +70,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       );
     }
 
-    return (this.props as any).children;
+    return this.props.children;
   }
 }
 
@@ -283,7 +283,8 @@ const AppContent: React.FC = () => {
 
         {/* Bottom Navigation */}
         <div 
-            className="bg-white/95 backdrop-blur-xl flex justify-around items-start pt-3 px-4 pb-5 z-50 absolute bottom-0 left-0 right-0 border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]"
+            className="bg-white/95 backdrop-blur-xl flex justify-around items-start pt-3 px-4 z-50 absolute bottom-0 left-0 right-0 border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]"
+            style={{ paddingBottom: 'calc(20px + env(safe-area-inset-bottom))' }}
         >
             <NavButton view="matrix" icon={LayoutGrid} />
             <NavButton view="list" icon={ListTodo} />
